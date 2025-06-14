@@ -18,7 +18,6 @@ import org.hibernate.validator.constraints.URL;
 public class DealPostDTO {
 
   @Schema(description = "Store ID", type = "String", example = "5fbe790ec6f0b32014074bb3")
-  @NotNull
   @JsonSerialize(using = ObjectIdJsonSerializer.class)
   private final ObjectId store;
 
@@ -60,7 +59,6 @@ public class DealPostDTO {
       description = "Deal URL",
       example = "https://www.amazon.com/HP-24mh-FHD-Monitor-Built/dp/B08BF4CZSV/")
   @URL
-  @NotNull
   private final String dealUrl;
 
   @Schema(description = "Deal photo URLs", example = "https://www.gravatar.com/avatar")

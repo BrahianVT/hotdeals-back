@@ -39,14 +39,8 @@ public class OpenApi30Config {
   }
 
   private Info getApiInfo() {
-    var contact =
-        new Contact()
-            .name(swaggerProperties.getContact().getName())
-            .email(swaggerProperties.getContact().getEmail())
-            .url(swaggerProperties.getContact().getUrl());
 
     return new Info()
-        .contact(contact)
         .title(swaggerProperties.getTitle())
         .description(swaggerProperties.getDescription())
         .version(swaggerProperties.getVersion());

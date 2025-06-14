@@ -74,7 +74,7 @@ public class EsDealServiceImpl implements EsDealService {
 
     final JsonNode jsonNode;
     try {
-      var response = highLevelClient.getLowLevelClient().performRequest(request);
+      var response = client.getLowLevelClient().performRequest(request);
       var responseBody = EntityUtils.toString(response.getEntity());
       jsonNode = new ObjectMapper().readTree(responseBody).get("hits").get("hits");
     } catch (Exception e) {
@@ -320,7 +320,7 @@ public class EsDealServiceImpl implements EsDealService {
     var request = createSearchRequest(searchParams, pageable);
     final JsonNode jsonNode;
     try {
-      var response = highLevelClient.getLowLevelClient().performRequest(request);
+      var response = client.getLowLevelClient().performRequest(request);
       var responseBody = EntityUtils.toString(response.getEntity());
       jsonNode = new ObjectMapper().readTree(responseBody);
     } catch (Exception e) {

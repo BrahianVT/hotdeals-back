@@ -30,6 +30,5 @@ public class CategoryPostDTO {
   private final String iconLigature;
 
   @Schema(description = "Category icon font family", example = "MaterialIcons")
-  @NotBlank
   private final String iconFontFamily;
 }

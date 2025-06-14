@@ -1,5 +1,6 @@
 db.createCollection('categories', {capped: false})
 db.createCollection('stores', {capped: false})
+db.createCollection('users', {capped: false})
 
 db.categories.insertMany([
   {
@@ -45,3 +46,12 @@ db.stores.insertMany([
     _class: 'store'
   },
 ])
+
+db.users.insertOne({
+  "uid": "b91zCBlN7yNDph7mT9XRiPAaWGd2",  // The UID from your Firebase token
+  "email": "pumasemj@hotmail.com",
+  "nickname": "MrWaylon677",
+  "avatar": "https://www.gravatar.com/avatar",
+  "createdAt": new Date(),
+  "_class": "user"  // This might be important for Spring Data MongoDB
+})

@@ -1,4 +1,21 @@
 services:
+  mongodb:
+    container_name: hotdeals_mongodb
+    environment:
+      - MONGO_INITDB_DATABASE=db
+    image: mongo:8.0
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - mongodb-data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "'db.adminCommand(\"ping\")'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      #mem_limit: 512m
   elasticsearch:
     container_name: hotdeals_elasticsearch
     environment:
@@ -8,17 +25,40 @@ services:
     image: elasticsearch:7.17.4
     ports:
       - 9200:9200
-  mongodb:
-    container_name: hotdeals_mongodb
-    environment:
-      - MONGO_INITDB_DATABASE=db
-    image: mongo:latest
-    ports:
-      - 27017:27017
     volumes:
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 1g
+
   redis:
     container_name: hotdeals_redis
-    image: redis:latest
+    image: redis:7.0
     ports:
       - 6379:6379
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    mem_limit: 256m
+
+volumes:
+  elasticsearch-data:
+  mongodb-data:
+  redis-data:
+
+networks:
+  default:
+    name: hotdeals-network
+
+# useful docker commands docker logs hotdeals_elasticsearch, docker port hotdeals_elasticsearch
+# on windows localhost = http://host.docker.internal/
+# docker exec -it hotdeals_mongodb mongosh  ---  show dbs, use db, show collections, db.categories.find(), db.stores.find()

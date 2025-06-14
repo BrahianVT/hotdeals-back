@@ -2,20 +2,21 @@ api-version: "1.0"
 spring:
   cache:
     redis:
+      enabled: false
       cache-null-values: false
       time-to-live: PT10M
   data:
     mongodb:
       auto-index-creation: true
       database: db
-    #      uri: mongodb://localhost:27017
+      uri: mongodb://127.0.0.1:27017  # uri: mongodb://mongodb:mongodb@host.docker.internal:27017/pet-clinic-reviews
     rest:
       detection-strategy: annotated
 #    elasticsearch:
 #      rest:
-#        uris: localhost:9200
+#        uris: http://127.0.0.1:9200
 #    redis:
-#      host: localhost
+#      host: 127.0.0.1
 #      port: 6379
 security:
   allowed-origins:
@@ -29,8 +30,8 @@ security:
     - DELETE
   # Set super admin email addresses here
   super-admins:
-    - admin1@gmail.com
-    - admin2@gmail.com
+    - pumasemj@gmail.com
+    - pumasemj@hotmail.com
 
 springdoc:
   packages-to-scan: com.halildurmus.hotdeals
@@ -41,10 +42,10 @@ springdoc:
     tags-sorter: alpha
 
 swagger:
-  contact:
-    name: "Halil Ibrahim Durmus"
-    email: "halildurmus97@gmail.com"
-    url: "https://github.com/halildurmus"
   description: "hotdeals REST API Documentation"
   title: "hotdeals API"
   version: "1.0.0"
+
+#logging:
+#  level:
+#    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
