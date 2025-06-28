@@ -41,12 +41,10 @@ public class DealPostDTO {
   private final String description;
 
   @Schema(description = "Deal original price", example = "249.99")
-  @NotNull
   @Min(1)
   private final Double originalPrice;
 
   @Schema(description = "Deal price", example = "226.99")
-  @NotNull
   @Min(0)
   private final Double price;
 
@@ -61,6 +59,6 @@ public class DealPostDTO {
   @URL
   private final String dealUrl;
 
-  @Schema(description = "Deal photo URLs", example = "https://www.gravatar.com/avatar")
+  @Schema(description = "Deal photo URLs", example = "[\"https://www.gravatar.com/avatar/1\", \"https://www.gravatar.com/avatar/2\"]")
   private final List<String> photos;
 }

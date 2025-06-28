@@ -61,6 +61,23 @@ public class CategoryController {
         .collect(Collectors.toList());
   }
 
+  @GetMapping("/tags")
+  @Operation(summary = "Returns all tags")
+  @ApiResponses(
+          @ApiResponse(
+                  responseCode = "200",
+                  description = "Successful operation",
+                  content =
+                  @Content(
+                          mediaType = "application/json",
+                          array = @ArraySchema(schema = @Schema(implementation = CategoryGetDTO.class)))))
+  public List<CategoryGetDTO> getTags(@ParameterObject Pageable pageable) {
+    var categories = service.findAllTags(pageable);
+    return categories.getContent().stream()
+            .map(mapStructMapper::categoryToCategoryGetDTO)
+            .collect(Collectors.toList());
+  }
+
   @GetMapping("/{id}")
   @IsSuper
   @Operation(summary = "Finds category by ID", security = @SecurityRequirement(name = "bearerAuth"))

@@ -22,6 +22,11 @@ public class CategoryServiceImpl implements CategoryService {
   }
 
   @Override
+  public Page<Category> findAllTags(Pageable pageable) {
+     return repository.findByIsTagTrue(pageable);
+  }
+
+  @Override
   public Optional<Category> findById(String id) {
     return repository.findById(id);
   }

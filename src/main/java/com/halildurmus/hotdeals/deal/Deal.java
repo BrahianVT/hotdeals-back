@@ -66,6 +66,10 @@ public class Deal extends DateAudit {
   @NotBlank
   private String category;
 
+  @Schema(description = "Deal tags", example = "[\"discount\", \"electronics\", \"sale\"]")
+  @Default
+  private List<String> tags = new ArrayList<>();
+
   @Schema(
       description = "Deal title",
       example = "HP 24mh FHD Monitor with 23.8-Inch IPS Display (1080p)")
@@ -82,12 +86,10 @@ public class Deal extends DateAudit {
   private String description;
 
   @Schema(description = "Deal original price", example = "249.99")
-  @NotNull
   @Min(1)
   private Double originalPrice;
 
   @Schema(description = "Deal price", example = "226.99")
-  @NotNull
   @Min(0)
   private Double price;
 
@@ -100,12 +102,11 @@ public class Deal extends DateAudit {
       description = "Deal URL",
       example = "https://www.amazon.com/HP-24mh-FHD-Monitor-Built/dp/B08BF4CZSV/")
   @URL
-  @NotNull
   private String dealUrl;
 
   @Default private DealStatus status = DealStatus.ACTIVE;
 
-  @Schema(description = "Deal photo URLs", example = "https://www.gravatar.com/avatar")
+  @Schema(description = "Deal photo URLs", example = "[\"https://www.gravatar.com/avatar/1\", \"https://www.gravatar.com/avatar/2\"]")
   private List<String> photos = new ArrayList<>();
 
   @Schema(description = "Deal views", example = "10")

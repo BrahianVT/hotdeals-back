@@ -1,5 +1,7 @@
 package com.halildurmus.hotdeals.category;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -35,4 +37,9 @@ public interface CategoryRepository extends MongoRepository<Category, String> {
   @Override
   @Cacheable("categories:findAll")
   Page<Category> findAll(Pageable pageable);
+
+  Page<Category> findByIsTagTrue(Pageable pageable);
+  List<Category> findByIsTagFalse();
+  List<Category> findByIsTagTrueAndCategoryIn(Collection<String> categories);
+  Optional<Category> findByCategoryAndIsTag(String category, boolean isTag);
 }

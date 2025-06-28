@@ -31,4 +31,7 @@ public class CategoryPostDTO {
 
   @Schema(description = "Category icon font family", example = "MaterialIcons")
   private final String iconFontFamily;
+
+  @Schema(description = "Indicates if this category is a tag", example = "false")
+  private boolean isTag;
 }

@@ -9,6 +9,8 @@ public interface CategoryService {
 
   Page<Category> findAll(Pageable pageable);
 
+  Page<Category> findAllTags(Pageable pageable);
+
   @IsSuper
   Optional<Category> findById(String id);
 

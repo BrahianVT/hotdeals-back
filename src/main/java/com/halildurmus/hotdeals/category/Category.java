@@ -4,10 +4,8 @@ import com.halildurmus.hotdeals.audit.DateAudit;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.TypeAlias;
@@ -35,7 +33,11 @@ public class Category extends DateAudit {
   @NotBlank
   private String category;
 
-  @NotBlank private String iconLigature;
+   private String iconLigature;
 
-  @NotBlank private String iconFontFamily;
+   private String iconFontFamily;
+
+
+    @Builder.Default
+    private boolean isTag = false;
 }

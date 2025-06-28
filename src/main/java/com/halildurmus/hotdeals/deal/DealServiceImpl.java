@@ -11,15 +11,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
+import com.halildurmus.hotdeals.category.Category;
+import com.halildurmus.hotdeals.category.CategoryRepository;
 import com.halildurmus.hotdeals.comment.CommentService;
 import com.halildurmus.hotdeals.deal.dto.DealPatchDTO;
 import com.halildurmus.hotdeals.deal.es.EsDeal;
 import com.halildurmus.hotdeals.deal.es.EsDealRepository;
 import com.halildurmus.hotdeals.exception.DealNotFoundException;
 import com.halildurmus.hotdeals.security.SecurityService;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +46,7 @@ public class DealServiceImpl implements DealService {
 
   @Autowired private CommentService commentService;
 
+  @Autowired private CategoryRepository categoryRepository;
   @Autowired private DealRepository repository;
 
   @Autowired private EsDealRepository esDealRepository;
@@ -98,6 +101,10 @@ public class DealServiceImpl implements DealService {
 
   @Override
   public Deal create(Deal deal) {
+
+    if(deal.getTags() != null && !deal.getTags().isEmpty()) {
+      deal.setTags(validatedTags(deal.getTags()));
+    }
     var savedDeal = repository.save(deal);
     try {
       esDealRepository.save(new EsDeal(deal));
@@ -107,6 +114,32 @@ public class DealServiceImpl implements DealService {
     }
 
     return savedDeal;
+  }
+
+  List<String> validatedTags(List<String> tags){
+    List<String> validatedTags = new ArrayList<>();
+
+    for (String tagPath : tags) {
+      // Check if tag exists, create if it doesn't
+      categoryRepository.findByCategoryAndIsTag(tagPath, true)
+              .orElseGet(() -> {
+                // Create a new tag
+                Category tag = new Category();
+                tag.setCategory(tagPath);
+                tag.setTag(true);
+
+                // Set a default name using the tag path
+                Map<String, String> names = new HashMap<>();
+                String tagName = tagPath.startsWith("/") ? tagPath.substring(1) : tagPath;
+                names.put("en", tagName);
+                tag.setNames(names);
+
+                return categoryRepository.save(tag);
+              });
+      validatedTags.add(tagPath);
+    }
+
+    return validatedTags;
   }
 
   private DealPatchDTO applyPatchToDeal(JsonPatch patch)
@@ -145,6 +178,13 @@ public class DealServiceImpl implements DealService {
     var user = securityService.getUser();
     if (!user.getId().equals(deal.getPostedBy().toString())) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
+    }
+
+    Deal existingDeal = repository.findById(deal.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deal not found"));
+
+    if(deal.getTags() != null && !deal.getTags().isEmpty() &&  !deal.getTags().equals(existingDeal.getTags())) {
+      deal.setTags(validatedTags(deal.getTags()));
     }
 
     var savedDeal = repository.save(deal);

@@ -14,7 +14,7 @@ public class CategoryGetDTO {
 
   @Schema(
       description = "Category names",
-      example = "{\"en\": \"Computers\", \"tr\": \"Bilgisayar\"}")
+      example = "{\"en\": \"Computers\", \"tr\": \"Bilgisayar\"}", implementation = Map.class)
   private final Map<String, String> names;
 
   @Schema(description = "Parent category path", example = "/")
@@ -28,4 +28,7 @@ public class CategoryGetDTO {
 
   @Schema(description = "Category icon font family", example = "MaterialIcons")
   private final String iconFontFamily;
+
+  @Schema(description = "Indicates if this category is a tag", example = "false")
+  private boolean isTag;
 }

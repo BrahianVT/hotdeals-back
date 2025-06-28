@@ -68,7 +68,7 @@ public class DealGetDTO {
       example = "https://www.amazon.com/HP-24mh-FHD-Monitor-Built/dp/B08BF4CZSV/")
   private final String dealUrl;
 
-  @Schema(description = "Deal photo URLs", example = "https://www.gravatar.com/avatar")
+  @Schema(description = "Deal photo URLs", example = "[\"https://www.gravatar.com/avatar/1\", \"https://www.gravatar.com/avatar/2\"]")
   private final List<String> photos;
 
   @Schema(description = "Deal views", example = "10")
