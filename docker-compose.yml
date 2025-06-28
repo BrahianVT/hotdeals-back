@@ -62,3 +62,4 @@ networks:
 # useful docker commands docker logs hotdeals_elasticsearch, docker port hotdeals_elasticsearch
 # on windows localhost = http://host.docker.internal/
 # docker exec -it hotdeals_mongodb mongosh  ---  show dbs, use db, show collections, db.categories.find(), db.stores.find()
+# remove volume   docker volume rm hotdeals-backend_mongodb-data , docker-compose down -v

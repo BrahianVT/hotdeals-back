@@ -139,3 +139,6 @@ docker logs hotdeals_mongodb
 ```
 
 The healthchecks will run automatically based on the interval you specified (30 seconds in this case), and Docker will update the health status accordingly.
+
+docker stop $(docker ps -a -q) - stop containers
+docker rm $(docker ps -a -q) - remove all the containers

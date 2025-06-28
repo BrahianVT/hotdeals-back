@@ -10,11 +10,13 @@ embedded:
       xpack.security.enabled: "false"
     reuseContainer: true
   mongodb:
-    dockerImage: mongo:latest
+    dockerImage: mongo:5.0
     enabled: true
     reuseContainer: true
+    waitTimeoutInSeconds: 180  # Increase timeout
+    startupTimeout: 180000     # Increase startup timeout in milliseconds
   redis:
-    dockerImage: redis:latest
+    dockerImage: redis:7.0
     enabled: true
     reuseContainer: true
 security:
@@ -30,3 +32,8 @@ spring:
       uris: http://${embedded.elasticsearch.host}:${embedded.elasticsearch.httpPort}
   redis:
     url: redis://:${embedded.redis.password}@${embedded.redis.host}:${embedded.redis.port}
+
+  test:
+    context:
+      cache:
+        maxSize=10:

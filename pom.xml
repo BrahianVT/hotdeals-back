@@ -140,7 +140,7 @@
       <artifactId>embedded-mongodb</artifactId>
       <groupId>com.playtika.testcontainers</groupId>
       <scope>test</scope>
-      <version>${embedded-testcontainers.version}</version>
+      <version>2.3.1</version>
     </dependency>
     <dependency>
       <artifactId>embedded-redis</artifactId>

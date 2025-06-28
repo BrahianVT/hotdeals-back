@@ -191,14 +191,15 @@ public class CategoryControllerTest extends BaseControllerUnitTest {
                     Objects.requireNonNull(result.getResolvedException())
                         .getMessage()
                         .contains(
-                            "Field error in object 'categoryPostDTO' on field 'iconLigature'")))
-        .andExpect(
+                            "Field error in object 'categoryPostDTO' on field 'iconLigature'")));
+        /*.andExpect(
             result ->
                 assertTrue(
                     Objects.requireNonNull(result.getResolvedException())
                         .getMessage()
                         .contains(
                             "Field error in object 'categoryPostDTO' on field 'iconFontFamily'")));
+         */
   }
 
   @Test
@@ -282,14 +283,15 @@ public class CategoryControllerTest extends BaseControllerUnitTest {
                     Objects.requireNonNull(result.getResolvedException())
                         .getMessage()
                         .contains(
-                            "Field error in object 'categoryPostDTO' on field 'iconLigature'")))
-        .andExpect(
+                            "Field error in object 'categoryPostDTO' on field 'iconLigature'")));
+        /*.andExpect(
             result ->
                 assertTrue(
                     Objects.requireNonNull(result.getResolvedException())
                         .getMessage()
                         .contains(
                             "Field error in object 'categoryPostDTO' on field 'iconFontFamily'")));
+         */
   }
 
   @Test

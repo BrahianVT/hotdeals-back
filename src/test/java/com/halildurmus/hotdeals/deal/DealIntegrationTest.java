@@ -69,10 +69,11 @@ public class DealIntegrationTest extends BaseIntegrationTest {
     var user = userRepository.save(DummyUsers.user1);
     when(securityService.getUser()).thenReturn(user);
     var deal = DummyDeals.deal1;
+    var content = json.write(deal).getJson();
     var request =
         post("/deals")
             .accept(MediaType.APPLICATION_JSON)
-            .content(json.write(deal).getJson())
+            .content(content)
             .contentType(MediaType.APPLICATION_JSON);
 
     mvc.perform(request)
