@@ -55,6 +55,7 @@ public class FirebaseFilter extends OncePerRequestFilter {
   }
 
   private User firebaseTokenToUser(FirebaseToken decodedToken) {
+    log.info(decodedToken.getUid());
     return userRepository.findByUid(decodedToken.getUid()).orElse(null);
   }
 

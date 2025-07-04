@@ -142,3 +142,6 @@ The healthchecks will run automatically based on the interval you specified (30 
 
 docker stop $(docker ps -a -q) - stop containers
 docker rm $(docker ps -a -q) - remove all the containers
+docker-compose down -v - remove all volumes
+sudo kill -9 $(sudo lsof -t -i:8080)  kill port 8080
+mvn package -Dmaven.test.skip

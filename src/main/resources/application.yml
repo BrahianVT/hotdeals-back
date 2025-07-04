@@ -19,8 +19,8 @@ spring:
 #      host: 127.0.0.1
 #      port: 6379
 security:
-  allowed-origins:
-    - http://localhost:3000
+  #allowed-origins:
+  #  - http://localhost:3000
   allowed-methods:
     - OPTIONS
     - GET
@@ -46,6 +46,6 @@ swagger:
   title: "hotdeals API"
   version: "1.0.0"
 
-#logging:
-#  level:
-#    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
