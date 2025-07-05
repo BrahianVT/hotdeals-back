@@ -30,5 +30,5 @@ public class CategoryGetDTO {
   private final String iconFontFamily;
 
   @Schema(description = "Indicates if this category is a tag", example = "false")
-  private boolean isTag;
+  private final Boolean isTag;
 }

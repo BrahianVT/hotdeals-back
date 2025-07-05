@@ -126,7 +126,7 @@ public class DealServiceImpl implements DealService {
                 // Create a new tag
                 Category tag = new Category();
                 tag.setCategory(tagPath);
-                tag.setTag(true);
+                tag.setIsTag(true);
 
                 // Set a default name using the tag path
                 Map<String, String> names = new HashMap<>();

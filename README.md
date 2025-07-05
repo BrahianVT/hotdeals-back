@@ -140,8 +140,14 @@ docker logs hotdeals_mongodb
 
 The healthchecks will run automatically based on the interval you specified (30 seconds in this case), and Docker will update the health status accordingly.
 
-docker stop $(docker ps -a -q) - stop containers
-docker rm $(docker ps -a -q) - remove all the containers
-docker-compose down -v - remove all volumes
-sudo kill -9 $(sudo lsof -t -i:8080)  kill port 8080
-mvn package -Dmaven.test.skip
+docker stop $(docker ps -a -q) - stop containers  
+docker rm $(docker ps -a -q) - remove all the containers  
+docker-compose down -v - remove all volumes  
+sudo kill -9 $(sudo lsof -t -i:8080)  kill port 8080  
+mvn package -Dmaven.test.skip  
+
+docker rm $(docker ps -a -q)  
+docker rmi $(docker images -a -q)  
+docker volume prune -f  
+docker network prune   
+docker-compose -p hotdeals up -d  

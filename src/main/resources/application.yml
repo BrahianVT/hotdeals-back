@@ -9,7 +9,7 @@ spring:
     mongodb:
       auto-index-creation: true
       database: db
-      uri: mongodb://127.0.0.1:27017  # uri: mongodb://mongodb:mongodb@host.docker.internal:27017/pet-clinic-reviews
+      uri: mongodb://127.0.0.1:27018  # uri: mongodb://mongodb:mongodb@host.docker.internal:27017/pet-clinic-reviews
     rest:
       detection-strategy: annotated
 #    elasticsearch:
@@ -46,6 +46,6 @@ swagger:
   title: "hotdeals API"
   version: "1.0.0"
 
-logging:
-  level:
-    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+#logging:
+#  level:
+#    org.springframework.data.mongodb.core.MongoTemplate: DEBUG

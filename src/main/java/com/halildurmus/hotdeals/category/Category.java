@@ -38,6 +38,5 @@ public class Category extends DateAudit {
    private String iconFontFamily;
 
 
-    @Builder.Default
-    private boolean isTag = false;
+    private Boolean isTag;
 }
