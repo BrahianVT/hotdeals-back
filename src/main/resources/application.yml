@@ -1,10 +1,10 @@
 api-version: "1.0"
 spring:
-  cache:
-    redis:
-      enabled: false
-      cache-null-values: false
-      time-to-live: PT10M
+  #cache:
+  #  redis:
+  #    enabled: false
+  #    cache-null-values: false
+  #    time-to-live: PT10M
   data:
     mongodb:
       auto-index-creation: true

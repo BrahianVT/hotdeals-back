@@ -150,4 +150,8 @@ docker rm $(docker ps -a -q)
 docker rmi $(docker images -a -q)  
 docker volume prune -f  
 docker network prune   
+docker volume rm hotdeals_elasticsearch-data hotdeals_mongodb-data hotdeals_redis-data
 docker-compose -p hotdeals up -d  
+docker-compose -p hotdeals stop
+docker-compose -p hotdeals start
+docker volume rm hotdeals_elasticsearch-data hotdeals_mongodb-data hotdeals_redis-data

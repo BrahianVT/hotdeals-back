@@ -33,5 +33,5 @@ public class CategoryPostDTO {
   private final String iconFontFamily;
 
   @Schema(description = "Indicates if this category is a tag", example = "false")
-  private boolean isTag;
+  private Boolean isTag;
 }
