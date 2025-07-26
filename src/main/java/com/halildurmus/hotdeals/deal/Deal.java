@@ -47,7 +47,7 @@ public class Deal extends DateAudit {
   @JsonSerialize(using = ObjectIdJsonSerializer.class)
   private ObjectId postedBy;
 
-  @NotNull
+
   @JsonSerialize(using = ObjectIdJsonSerializer.class)
   private ObjectId store;
 
