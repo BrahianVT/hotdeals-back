@@ -49,4 +49,7 @@ swagger:
 
 #logging:
 #  level:
-#    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    #org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    #root: INFO  # Sets the root logging level
+    #com.halildurmus.hotdeals: INFO  # Your application package
+    #org.springframework: INFO

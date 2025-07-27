@@ -155,3 +155,13 @@ docker-compose -p hotdeals up -d
 docker-compose -p hotdeals stop
 docker-compose -p hotdeals start
 docker volume rm hotdeals_elasticsearch-data hotdeals_mongodb-data hotdeals_redis-data
+
+
+## use full commands 
+
+mvn clean package -DskipTests
+run application in back-ground
+nohup java -jar target/hotdeals-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+
+visualize last 20 log lines
+tail -n 20 -f app.log

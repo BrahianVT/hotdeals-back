@@ -70,8 +70,26 @@
     <dependency>
       <artifactId>firebase-admin</artifactId>
       <groupId>com.google.firebase</groupId>
-      <version>9.0.0</version>
+      <version>9.5.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+      <version>5.2.1</version> </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5-fluent</artifactId>
+      <version>5.2.1</version> </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents.core5</groupId>
+      <artifactId>httpcore5</artifactId>
+      <version>5.2.2</version> </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents.core5</groupId>
+      <artifactId>httpcore5-h2</artifactId>
+      <version>5.2.2</version> </dependency>
+
     <dependency>
       <artifactId>springdoc-openapi-ui</artifactId>
       <groupId>org.springdoc</groupId>
