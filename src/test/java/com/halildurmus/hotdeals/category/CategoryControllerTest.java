@@ -23,7 +23,7 @@ import com.halildurmus.hotdeals.mapstruct.MapStructMapperImpl;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

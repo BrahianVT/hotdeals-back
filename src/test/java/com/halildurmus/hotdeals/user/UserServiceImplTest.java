@@ -10,8 +10,9 @@ import static org.mockito.Mockito.when;
 import com.halildurmus.hotdeals.deal.DealRepository;
 import com.halildurmus.hotdeals.user.dummy.DummyUsers;
 import com.halildurmus.hotdeals.util.FakerUtil;
+import de.flapdoodle.embed.mongo.spring.autoconfigure.EmbeddedMongoAutoConfiguration;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration;
+
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.dao.DuplicateKeyException;

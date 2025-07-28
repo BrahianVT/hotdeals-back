@@ -1,10 +1,18 @@
 api-version: "1.0"
 spring:
-  #cache:
-  #  redis:
-  #    enabled: false
-  #    cache-null-values: false
-  #    time-to-live: PT10M
+  threads:
+    virtual:
+      enabled=true
+  main:
+    web-application-type: servlet
+  task:
+    execution:
+      virtual-threads: true
+  #  cache:
+#    redis:
+#      enabled: false
+#      cache-null-values: false
+#      time-to-live: PT10M
   data:
     mongodb:
       auto-index-creation: true
@@ -34,6 +42,7 @@ security:
     - pumasemj@gmail.com
     - pumasemj@hotmail.com
 
+
 springdoc:
   packages-to-scan: com.halildurmus.hotdeals
   swagger-ui:
@@ -51,5 +60,5 @@ swagger:
 #  level:
     #org.springframework.data.mongodb.core.MongoTemplate: DEBUG
     #root: INFO  # Sets the root logging level
-    #com.halildurmus.hotdeals: INFO  # Your application package
+#    com.halildurmus.hotdeals: DEBUG  # Your application package
     #org.springframework: INFO

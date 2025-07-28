@@ -79,3 +79,175 @@ However, for the specific scenario of adding the initial `ROLE_SUPER` claim base
 **Conclusion:**
 
 The most appropriate and straightforward solution is to **remove the `@IsSuper` annotation from the `RoleService` interface and `RoleServiceImpl` class/methods**. The security enforcement for adding/removing roles should primarily reside at the API layer (in `RoleController`), not at the internal service layer when it's being called by an authentication filter during the *initial* authentication process.
+
+
+## Updating to spring security 3
+
+You're facing significant changes in Spring Security 6, which is used by Spring Boot 3. The `WebSecurityConfigurerAdapter` class was deprecated in Spring Security 5.7 and has been **removed** in Spring Security 6. Additionally, the fluent API methods like `and()`, `cors()`, `csrf()`, `formLogin()`, and `authorizeRequests()` have been updated to use a more modern, lambda-based DSL (Domain Specific Language) for configuration.
+
+Let's break down the issues and how to update your `SecurityConfig` class:
+
+**Issues and Solutions:**
+
+1.  **`Cannot resolve symbol 'WebSecurityConfigurerAdapter'`**:
+
+    * **Reason:** As mentioned, this class is removed in Spring Security 6.
+    * **Solution:** You no longer extend `WebSecurityConfigurerAdapter`. Instead, you define a `SecurityFilterChain` bean.
+
+2.  **`@EnableGlobalMethodSecurity` is deprecated**:
+
+    * **Reason:** This annotation has been replaced by `@EnableMethodSecurity`.
+    * **Solution:** Change `@EnableGlobalMethodSecurity` to `@EnableMethodSecurity`. The `prePostEnabled` is true by default, so you might be able to simplify it.
+
+3.  **`cors()`, `and()`, `csrf()`, `formLogin()` are deprecated/removed**:
+
+    * **Reason:** Spring Security 6 moved to a lambda-based configuration style. The `and()` method is no longer needed as the chain of calls can be nested using lambdas.
+    * **Solution:** Rewrite the `HttpSecurity` configuration using the new lambda DSL.
+
+4.  **`authorizeRequests()` and `antMatchers()`, `regexMatchers()` are deprecated/removed**:
+
+    * **Reason:** These have been replaced by `authorizeHttpRequests()` and `requestMatchers()`.
+    * **Solution:** Update your authorization rules to use `authorizeHttpRequests()` and `requestMatchers()`.
+
+Here's your updated `SecurityConfig` class for Spring Boot 3 / Spring Security 6 / Java 21:
+
+```java
+package com.halildurmus.hotdeals.config; // Assuming this is your package
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.halildurmus.hotdeals.security.FirebaseFilter;
+import com.halildurmus.hotdeals.security.SecurityProperties;
+import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.Customizer; // Import Customizer
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // UPDATED import
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer; // NEW import
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain; // NEW import
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(securedEnabled = true, jsr250Enabled = true, prePostEnabled = true) // UPDATED
+@ConditionalOnProperty(name = "security.enabled", havingValue = "true")
+public class SecurityConfig { // No longer extends WebSecurityConfigurerAdapter
+
+  private static final String[] PUBLIC_GET_ENDPOINTS = {
+    "/actuator/health", "/categories", "/deals/**", "/error", "/stores", "/categories/tags"
+  };
+
+  // Matches /users/{id}, /users/{id}/comment-count, /users/{id}/extended
+  private static final String[] PUBLIC_GET_ENDPOINTS_REGEX = {"/users/(?!me|search).+"};
+
+  private static final String[] PUBLIC_POST_ENDPOINTS = {"/users"};
+
+  private static final String[] SWAGGER_ENDPOINTS = {"/swagger-ui/**", "/v3/api-docs/**"};
+
+  @Autowired private ObjectMapper objectMapper;
+
+  @Autowired private SecurityProperties securityProperties;
+
+  @Autowired private FirebaseFilter firebaseFilter;
+
+  @Bean
+  public AuthenticationEntryPoint restAuthenticationEntryPoint() {
+    return (httpServletRequest, httpServletResponse, e) -> {
+      Map<String, Object> errorObject = new HashMap<>();
+      errorObject.put("message", "Unauthorized access of protected resource, invalid credentials");
+      errorObject.put("error", HttpStatus.UNAUTHORIZED);
+      errorObject.put("code", HttpStatus.UNAUTHORIZED.value());
+      errorObject.put("timestamp", new Timestamp(new Date().getTime()));
+      httpServletResponse.setContentType("application/json;charset=UTF-8");
+      httpServletResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
+      httpServletResponse.getWriter().write(objectMapper.writeValueAsString(errorObject));
+    };
+  }
+
+  @Bean
+  CorsConfigurationSource corsConfigurationSource() {
+    var configuration = new CorsConfiguration();
+    configuration.setAllowedOrigins(securityProperties.getAllowedOrigins());
+    configuration.setAllowedMethods(securityProperties.getAllowedMethods());
+    // Important for credentials (like cookies, authorization headers)
+    configuration.setAllowCredentials(true);
+    // You might want to allow specific headers if your frontend sends custom ones
+    configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
+    var source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
+
+  // The new way to configure HttpSecurity is via a SecurityFilterChain bean
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    httpSecurity
+        .cors(cors -> cors.configurationSource(corsConfigurationSource())) // UPDATED: lambda syntax for cors
+        .csrf(csrf -> csrf.disable()) // UPDATED: lambda syntax for csrf
+        .formLogin(Customizer.withDefaults()) // UPDATED: lambda syntax. Customizer.withDefaults() disables it by default when you use .disable()
+        .httpBasic(Customizer.withDefaults()) // UPDATED: lambda syntax. Customizer.withDefaults() disables it by default when you use .disable()
+        .exceptionHandling(
+            exceptionHandling -> exceptionHandling.authenticationEntryPoint(restAuthenticationEntryPoint())) // UPDATED: lambda syntax
+        .authorizeHttpRequests(
+            authorizeRequests -> // UPDATED: authorizeRequests() -> authorizeHttpRequests()
+            authorizeRequests
+                .requestMatchers(
+                    "/actuator/**", "/comment-reports/**", "/deal-reports/**", "/user-reports/**") // UPDATED: antMatchers -> requestMatchers
+                .hasRole("SUPER")
+                .anyRequest()
+                .authenticated())
+        .addFilterBefore(firebaseFilter, BasicAuthenticationFilter.class)
+        .sessionManagement(
+            sessionManagement ->
+                sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // UPDATED: lambda syntax
+
+    return httpSecurity.build(); // Don't forget to build the HttpSecurity object
+  }
+
+  // The new way to configure WebSecurity is via a WebSecurityCustomizer bean
+  @Bean
+  public WebSecurityCustomizer webSecurityCustomizer() {
+    return (web) ->
+        web.ignoring()
+            .requestMatchers(HttpMethod.OPTIONS, "/**") // UPDATED: antMatchers -> requestMatchers
+            .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
+            .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
+            .requestMatchers(HttpMethod.GET, SWAGGER_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
+            .requestMatchers(new RegexRequestMatcher(PUBLIC_GET_ENDPOINTS_REGEX[0], HttpMethod.GET.name()))
+  }
+}
+```
+
+**Summary of Changes:**
+
+1.  **No more `extends WebSecurityConfigurerAdapter`**: The class `SecurityConfig` no longer extends this deprecated class.
+2.  **`SecurityFilterChain` Bean**: The `configure(HttpSecurity httpSecurity)` method is replaced by a `@Bean` method that returns `SecurityFilterChain`. This method takes `HttpSecurity` as an argument and configures it using the new lambda DSL, finally returning `httpSecurity.build()`.
+3.  **`WebSecurityCustomizer` Bean**: The `configure(WebSecurity web)` method is replaced by a `@Bean` method that returns `WebSecurityCustomizer`. This is used for ignoring specific requests from the security filter chain.
+4.  **`@EnableGlobalMethodSecurity` to `@EnableMethodSecurity`**: The annotation for method-level security has been updated.
+5.  **Lambda-based DSL for `HttpSecurity`**:
+    * `httpSecurity.cors().configurationSource(corsConfigurationSource()).and()` becomes `httpSecurity.cors(cors -> cors.configurationSource(corsConfigurationSource()))`.
+    * `httpSecurity.csrf().disable().and()` becomes `httpSecurity.csrf(csrf -> csrf.disable())`.
+    * `httpSecurity.formLogin().disable().and()` becomes `httpSecurity.formLogin(Customizer.withDefaults())`. (Using `Customizer.withDefaults()` for `formLogin()` and `httpBasic()` effectively disables them if they were previously `disable()`d. If you want to enable default form login, just `httpSecurity.formLogin(Customizer.withDefaults())` is enough).
+    * `httpSecurity.httpBasic().disable().and()` becomes `httpSecurity.httpBasic(Customizer.withDefaults())`.
+    * `httpSecurity.exceptionHandling().authenticationEntryPoint(restAuthenticationEntryPoint()).and()` becomes `httpSecurity.exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(restAuthenticationEntryPoint()))`.
+    * `httpSecurity.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)` becomes `httpSecurity.sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))`.
+6.  **`authorizeRequests()` to `authorizeHttpRequests()`**: This is the new method for configuring request authorization.
+7.  **`antMatchers()` to `requestMatchers()`**: The method for matching URLs is now `requestMatchers()`. This applies to both `HttpSecurity` and `WebSecurityCustomizer` configurations. `regexMatchers()` remains if you specifically need regular expressions.
+8.  **Import `Customizer`**: You'll need `import org.springframework.security.config.Customizer;` for the new `withDefaults()` calls.
+
+This updated configuration is aligned with Spring Security 6's recommended practices and should resolve all the compilation errors and deprecation warnings you're currently seeing. Remember to rebuild and test your application thoroughly after these changes.
+

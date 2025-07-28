@@ -159,9 +159,12 @@ docker volume rm hotdeals_elasticsearch-data hotdeals_mongodb-data hotdeals_redi
 
 ## use full commands 
 
-mvn clean package -DskipTests
-run application in back-ground
-nohup java -jar target/hotdeals-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+mvn clean package -DskipTests  
+run application in back-ground  
+nohup java -jar target/hotdeals-0.0.1-SNAPSHOT.jar > app.log 2>&1 &  
 
-visualize last 20 log lines
+visualize last 20 log lines:  
 tail -n 20 -f app.log
+
+kill process:  
+kill -9 $(lsof -t -i :8080)

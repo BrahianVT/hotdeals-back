@@ -4,12 +4,13 @@ import com.fasterxml.jackson.databind.exc.ValueInstantiationException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.rest.webmvc.ResourceNotFoundException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -142,7 +143,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
   protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(
       HttpRequestMethodNotSupportedException e,
       HttpHeaders headers,
-      HttpStatus status,
+      HttpStatusCode status,
       WebRequest request) {
     var sb = new StringBuilder();
     sb.append(e.getMethod());
@@ -163,7 +164,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
   protected ResponseEntity<Object> handleMethodArgumentNotValid(
       MethodArgumentNotValidException e,
       HttpHeaders headers,
-      HttpStatus status,
+      HttpStatusCode  status,
       WebRequest request) {
     List<String> errors = new ArrayList<>();
     for (var error : e.getBindingResult().getFieldErrors()) {
@@ -203,7 +204,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
   @Override
   protected ResponseEntity<Object> handleNoHandlerFoundException(
-      NoHandlerFoundException e, HttpHeaders headers, HttpStatus status, WebRequest request) {
+      NoHandlerFoundException e, HttpHeaders headers, HttpStatusCode  status, WebRequest request) {
     var errorMessage = "No handler found for " + e.getHttpMethod() + " " + e.getRequestURL();
     var error =
         new AppError(
@@ -231,7 +232,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
   @Override
   protected ResponseEntity<Object> handleTypeMismatch(
-      TypeMismatchException e, HttpHeaders headers, HttpStatus status, WebRequest request) {
+      TypeMismatchException e, HttpHeaders headers, HttpStatusCode  status, WebRequest request) {
     var errorMessage =
         e.getValue()
             + " value for "

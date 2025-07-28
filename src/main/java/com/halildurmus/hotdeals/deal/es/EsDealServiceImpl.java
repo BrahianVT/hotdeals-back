@@ -1,35 +1,18 @@
 package com.halildurmus.hotdeals.deal.es;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.aggregations.*;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.halildurmus.hotdeals.deal.DealRepository;
 import com.halildurmus.hotdeals.deal.DealSearchParams;
 import com.halildurmus.hotdeals.deal.PriceRange;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.util.EntityUtils;
-import org.apache.lucene.search.join.ScoreMode;
-import org.elasticsearch.client.Request;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.MultiMatchQueryBuilder;
-import org.elasticsearch.index.query.MultiMatchQueryBuilder.Type;
-import org.elasticsearch.index.query.NestedQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermQueryBuilder;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.filter.FilterAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.nested.NestedAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.range.RangeAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.terms.TermsAggregationBuilder;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.NestedSortBuilder;
-import org.elasticsearch.search.sort.SortBuilders;
-import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,253 +21,326 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.util.*;
+
 @Slf4j
 @Service
 public class EsDealServiceImpl implements EsDealService {
 
   private static final int MAX_SUGGESTION = 5;
-
-  private static final String SEARCH_DEALS_ENDPOINT = "/deal/_search";
+  private static final String DEAL_INDEX = "deal";
 
   @Autowired private DealRepository dealRepository;
-
   @Autowired private EsDealRepository repository;
-
-  @Autowired private RestHighLevelClient client;
+  @Autowired private ElasticsearchClient esClient;
+  @Autowired private ObjectMapper objectMapper;
 
   @Override
   public Page<EsDeal> findAll(Pageable pageable) {
     return repository.findAll(pageable);
   }
 
-  private MultiMatchQueryBuilder createAutocompleteQuery(String query) {
-    return new MultiMatchQueryBuilder(query, "title", "title._2gram", "title._3gram")
-        .type(Type.BOOL_PREFIX);
+  private MultiMatchQuery createAutocompleteQuery(String query) {
+    return MultiMatchQuery.of(m -> m
+            .query(query)
+            .fields("title", "title._2gram", "title._3gram")
+            .type(TextQueryType.BoolPrefix)
+    );
   }
 
   @Override
   public JsonNode getSuggestions(String query) {
-    final var request = new Request("GET", "/deal/_search");
-    var searchSource = new SearchSourceBuilder();
-    searchSource.size(MAX_SUGGESTION);
-    searchSource.query(createAutocompleteQuery(query));
-    // We only need the title property from the response
-    searchSource.fetchSource("title", null);
-    request.setJsonEntity(searchSource.toString());
-
-    final JsonNode jsonNode;
     try {
-      var response = client.getLowLevelClient().performRequest(request);
-      var responseBody = EntityUtils.toString(response.getEntity());
-      jsonNode = new ObjectMapper().readTree(responseBody).get("hits").get("hits");
-    } catch (Exception e) {
+      SearchRequest request = SearchRequest.of(r -> r
+              .index(DEAL_INDEX)
+              .size(MAX_SUGGESTION)
+              .query(q -> q.multiMatch(createAutocompleteQuery(query)))
+              .source(s -> s.filter(f -> f.includes("title")))
+      );
+
+      SearchResponse<Object> response = esClient.search(request, Object.class);
+      return objectMapper.valueToTree(response.hits().hits());
+    } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-
-    return jsonNode;
   }
 
-  private NestedQueryBuilder createStringFacetFilter(String facetName, String facetValue) {
-    var facetGroup = "stringFacets";
-    var boolQuery = new BoolQueryBuilder();
-    var facetNameTermQuery = new TermQueryBuilder(facetGroup + ".facetName", facetName);
-    var facetValueTermQuery = new TermQueryBuilder(facetGroup + ".facetValue", facetValue);
-    boolQuery.filter(facetNameTermQuery).filter(facetValueTermQuery);
-    return new NestedQueryBuilder(facetGroup, boolQuery, ScoreMode.Avg);
+  private NestedQuery createStringFacetFilter(String facetName, String facetValue) {
+    String facetGroup = "stringFacets";
+    return NestedQuery.of(n -> n
+            .path(facetGroup)
+            .scoreMode(ChildScoreMode.Avg)
+            .query(q -> q
+                    .bool(b -> b
+                            .must(List.of(
+                                    Query.of(q1 -> q1.term(t -> t.field(facetGroup + ".facetName").value(facetName))),
+                                    Query.of(q2 -> q2.term(t -> t.field(facetGroup + ".facetValue").value(facetValue)))
+                            ))
+                    )
+            )
+    );
   }
 
-  private NestedQueryBuilder createNumberFacetFilter(String facetName, Double from, Double to) {
-    var facetGroup = "numberFacets";
-    var boolQuery = new BoolQueryBuilder();
-    var facetNameTermQuery = new TermQueryBuilder(facetGroup + ".facetName", facetName);
-    var facetValueRangeQuery = QueryBuilders.rangeQuery(facetGroup + ".facetValue").gte(from);
+  private NestedQuery createNumberFacetFilter(String facetName, Double from, Double to) {
+    String facetGroup = "numberFacets";
+
+    List<Query> queries = new ArrayList<>();
+    queries.add(Query.of(q -> q.term(t -> t.field(facetGroup + ".facetName").value(facetName))));
+
+    RangeQuery.Builder rangeBuilder = new RangeQuery.Builder()
+            .field(facetGroup + ".facetValue")
+            .gte(JsonData.of(from));
+
     if (to != null) {
-      facetValueRangeQuery.lt(to);
+      rangeBuilder.lt(JsonData.of(to));
     }
-    boolQuery.filter(facetNameTermQuery).filter(facetValueRangeQuery);
-    return new NestedQueryBuilder(facetGroup, boolQuery, ScoreMode.Avg);
+
+    queries.add(Query.of(q -> q.range(rangeBuilder.build())));
+
+    return NestedQuery.of(n -> n
+            .path(facetGroup)
+            .scoreMode(ChildScoreMode.Avg)
+            .query(q -> q
+                    .bool(b -> b
+                            .must(queries)
+                    )
+            )
+    );
   }
 
-  private FieldSortBuilder createCreatedAtSort(SortOrder sortOrder) {
-    return SortBuilders.fieldSort("createdAt").setNumericType("date").order(sortOrder);
+  private co.elastic.clients.elasticsearch._types.SortOptions createCreatedAtSort(SortOrder sortOrder) {
+    return co.elastic.clients.elasticsearch._types.SortOptions.of(s -> s
+            .field(f -> f
+                    .field("createdAt")
+                    .order(sortOrder)
+            )
+    );
   }
 
-  private FieldSortBuilder createPriceSort(SortOrder sortOrder) {
-    var nestedPath = "numberFacets";
-    var fieldName = "numberFacets.facetValue";
-    var termQuery = new TermQueryBuilder(nestedPath + ".facetName", "price");
-    var nestedSort = new NestedSortBuilder(nestedPath).setFilter(termQuery);
-    return SortBuilders.fieldSort(fieldName).order(sortOrder).setNestedSort(nestedSort);
+  private co.elastic.clients.elasticsearch._types.SortOptions createPriceSort(SortOrder sortOrder) {
+    String nestedPath = "numberFacets";
+    String fieldName = "numberFacets.facetValue";
+
+    return co.elastic.clients.elasticsearch._types.SortOptions.of(s -> s
+            .field(f -> f
+                    .field(fieldName)
+                    .order(sortOrder)
+                    .nested(n -> n
+                            .path(nestedPath)
+                            .filter(fi -> fi
+                                    .term(t -> t
+                                            .field(nestedPath + ".facetName")
+                                            .value("price")
+                                    )
+                            )
+                    )
+            )
+    );
   }
 
-  private List<QueryBuilder> createCategoryFilters(List<String> categories) {
-    List<QueryBuilder> nestedQueries = new ArrayList<>();
+  private List<Query> createCategoryFilters(List<String> categories) {
+    List<Query> queries = new ArrayList<>();
+
     if (categories.size() > 1) {
-      var boolQuery = new BoolQueryBuilder();
-      for (var category : categories) {
-        boolQuery.should(createStringFacetFilter("category", category));
+      List<Query> shouldQueries = new ArrayList<>();
+      for (String category : categories) {
+        shouldQueries.add(Query.of(q -> q.nested(createStringFacetFilter("category", category))));
       }
-      nestedQueries.add(boolQuery);
+
+      queries.add(Query.of(q -> q.bool(b -> b.should(shouldQueries))));
     } else {
-      nestedQueries.add(createStringFacetFilter("category", categories.get(0)));
+      queries.add(Query.of(q -> q.nested(createStringFacetFilter("category", categories.get(0)))));
     }
 
-    return nestedQueries;
+    return queries;
   }
 
-  private List<QueryBuilder> createPriceFilters(List<PriceRange> priceRanges) {
-    List<QueryBuilder> nestedQueries = new ArrayList<>();
-    var boolQuery = new BoolQueryBuilder();
-    for (var pr : priceRanges) {
-      boolQuery.should(createNumberFacetFilter("price", pr.getFrom(), pr.getTo()));
+  private List<Query> createPriceFilters(List<PriceRange> priceRanges) {
+    List<Query> queries = new ArrayList<>();
+
+    List<Query> shouldQueries = new ArrayList<>();
+    for (PriceRange pr : priceRanges) {
+      shouldQueries.add(Query.of(q -> q.nested(createNumberFacetFilter("price", pr.getFrom(), pr.getTo()))));
     }
-    nestedQueries.add(boolQuery);
-    return nestedQueries;
+
+    queries.add(Query.of(q -> q.bool(b -> b.should(shouldQueries))));
+    return queries;
   }
 
-  private List<QueryBuilder> createStoreFilters(List<String> stores) {
-    List<QueryBuilder> nestedQueries = new ArrayList<>();
+  private List<Query> createStoreFilters(List<String> stores) {
+    List<Query> queries = new ArrayList<>();
+
     if (stores.size() > 1) {
-      var boolQuery = new BoolQueryBuilder();
-      for (var store : stores) {
-        boolQuery.should(createStringFacetFilter("store", store));
+      List<Query> shouldQueries = new ArrayList<>();
+      for (String store : stores) {
+        shouldQueries.add(Query.of(q -> q.nested(createStringFacetFilter("store", store))));
       }
-      nestedQueries.add(boolQuery);
+
+      queries.add(Query.of(q -> q.bool(b -> b.should(shouldQueries))));
     } else {
-      nestedQueries.add(createStringFacetFilter("store", stores.get(0)));
+      queries.add(Query.of(q -> q.nested(createStringFacetFilter("store", stores.get(0)))));
     }
 
-    return nestedQueries;
+    return queries;
   }
 
-  private MultiMatchQueryBuilder createMultiMatchQuery(String query) {
-    return new MultiMatchQueryBuilder(query, "title", "description");
+  private MultiMatchQuery createMultiMatchQuery(String query) {
+    return MultiMatchQuery.of(m -> m
+            .query(query)
+            .fields("title", "description")
+    );
   }
 
-  private TermQueryBuilder createTermQuery() {
-    return new TermQueryBuilder("status", "ACTIVE");
+  private TermQuery createTermQuery() {
+    return TermQuery.of(t -> t
+            .field("status")
+            .value("ACTIVE")
+    );
   }
 
-  private BoolQueryBuilder createBoolQuery(Boolean hideExpired, String query) {
-    var boolQuery = new BoolQueryBuilder();
+  private BoolQuery createBoolQuery(Boolean hideExpired, String query) {
+    BoolQuery.Builder boolQuery = new BoolQuery.Builder();
+
     if (hideExpired) {
-      // Filter out expired deals
-      boolQuery.filter(createTermQuery());
+      boolQuery.filter(Query.of(q -> q.term(createTermQuery())));
     }
-    boolQuery.must(createMultiMatchQuery(query));
-    return boolQuery;
+
+    boolQuery.must(Query.of(q -> q.multiMatch(createMultiMatchQuery(query))));
+
+    return boolQuery.build();
   }
 
-  private BoolQueryBuilder createFilters(DealSearchParams searchParams, String filterToBeExcluded) {
-    var boolQuery = new BoolQueryBuilder();
+  private BoolQuery createFilters(DealSearchParams searchParams, String filterToBeExcluded) {
+    BoolQuery.Builder boolQuery = new BoolQuery.Builder();
+
     if (searchParams.getCategories() == null
-        && searchParams.getPrices() == null
-        && searchParams.getStores() == null) {
-      return boolQuery;
+            && searchParams.getPrices() == null
+            && searchParams.getStores() == null) {
+      return boolQuery.build();
     }
 
-    List<QueryBuilder> filters = new ArrayList<>();
+    List<Query> filters = new ArrayList<>();
+
     if (searchParams.getCategories() != null && !Objects.equals(filterToBeExcluded, "category")) {
       filters.addAll(createCategoryFilters(searchParams.getCategories()));
     }
+
     if (searchParams.getPrices() != null && !Objects.equals(filterToBeExcluded, "price")) {
       filters.addAll(createPriceFilters(searchParams.getPrices()));
     }
+
     if (searchParams.getStores() != null && !Objects.equals(filterToBeExcluded, "store")) {
       filters.addAll(createStoreFilters(searchParams.getStores()));
     }
 
-    for (var filter : filters) {
+    for (Query filter : filters) {
       boolQuery.filter(filter);
     }
 
-    return boolQuery;
+    return boolQuery.build();
   }
 
-  private FieldSortBuilder createSort(String sortBy, String order) {
-    var sortOrder = order.equals("asc") ? SortOrder.ASC : SortOrder.DESC;
-    final FieldSortBuilder fieldSort;
-    if (sortBy.equals("createdAt")) {
-      fieldSort = createCreatedAtSort(sortOrder);
-    } else {
-      fieldSort = createPriceSort(sortOrder);
-    }
-
-    return fieldSort;
+  private Aggregation createAllFiltersSubAgg(String facetGroup) {
+    return Aggregation.of(a -> a
+            .nested(n -> n.path(facetGroup))
+            .aggregations(new HashMap<String, Aggregation>() {{ // Explicitly create map for aggregations
+              put("names", Aggregation.of(namesAgg -> namesAgg
+                      .terms(t -> t.field(facetGroup + ".facetName"))
+                      .aggregations(new HashMap<String, Aggregation>() {{
+                        put("values", Aggregation.of(valuesAgg -> valuesAgg
+                                .terms(t -> t.field(facetGroup + ".facetValue"))));
+                      }})));
+            }}));
   }
 
-  private NestedAggregationBuilder createAllFiltersSubAgg(String facetGroup) {
-    var stringFacets = new NestedAggregationBuilder(facetGroup, facetGroup);
-    var facetNames = new TermsAggregationBuilder("names").field(facetGroup + ".facetName");
-    var facetValues = new TermsAggregationBuilder("values").field(facetGroup + ".facetValue");
-    facetNames.subAggregation(facetValues);
-    return stringFacets.subAggregation(facetNames);
+  private Aggregation createAllFiltersAgg(DealSearchParams searchParams) {
+    return Aggregation.of(a -> a
+            .filter(f -> f.bool(createFilters(searchParams, null)))
+            .aggregations(new HashMap<String, Aggregation>() {{
+              put("stringFacets", createAllFiltersSubAgg("stringFacets"));
+              put("numberFacets", createAllFiltersSubAgg("numberFacets"));
+            }}));
   }
 
-  private FilterAggregationBuilder createAllFiltersAgg(DealSearchParams searchParams) {
-    var allFiltersAgg =
-        new FilterAggregationBuilder("aggAllFilters", createFilters(searchParams, null));
-    return allFiltersAgg
-        .subAggregation(createAllFiltersSubAgg("stringFacets"))
-        .subAggregation(createAllFiltersSubAgg("numberFacets"));
+  private Aggregation createFilterAgg(String fieldName, String facetName) {
+    return Aggregation.of(a -> a
+            .filter(f -> f.match(m -> m.field(fieldName).query(facetName))));
   }
 
-  private FilterAggregationBuilder createFilterAgg(String fieldName, String facetName) {
-    return new FilterAggregationBuilder(
-        "aggSpecial", QueryBuilders.matchQuery(fieldName, facetName));
+  private Aggregation createNestedSubAgg(String facetGroup, String facetName) {
+    return Aggregation.of(a -> a
+            .nested(n -> n.path(facetGroup))
+            .aggregations(new HashMap<String, Aggregation>() {{
+              put("aggSpecial", Aggregation.of(specialAgg -> specialAgg
+                      .filter(f -> f.term(t -> t.field(facetGroup + ".facetName").value(facetName)))
+                      .aggregations(new HashMap<String, Aggregation>() {{
+                        put("names", Aggregation.of(namesAgg -> namesAgg
+                                .terms(t -> t.field(facetGroup + ".facetName"))
+                                .aggregations(new HashMap<String, Aggregation>() {{
+                                  put("values", Aggregation.of(valuesAgg -> valuesAgg
+                                          .terms(t -> t.field(facetGroup + ".facetValue"))));
+                                }})));
+                      }})));
+            }}));
   }
 
-  private NestedAggregationBuilder createNestedSubAgg(String facetGroup, String facetName) {
-    var stringFacets = new NestedAggregationBuilder(facetGroup, facetGroup);
-    var facetNames = new TermsAggregationBuilder("names").field(facetGroup + ".facetName");
-    var facetValues = new TermsAggregationBuilder("values").field(facetGroup + ".facetValue");
-    facetNames.subAggregation(facetValues);
-    var filterAgg =
-        createFilterAgg(facetGroup + ".facetName", facetName).subAggregation(facetNames);
-    return stringFacets.subAggregation(filterAgg);
+  private Aggregation createCategoryAgg(DealSearchParams searchParams) {
+    return Aggregation.of(a -> a
+            .filter(f -> f.bool(createFilters(searchParams, "category")))
+            .aggregations(new HashMap<String, Aggregation>() {{
+              put("stringFacets", createNestedSubAgg("stringFacets", "category"));
+            }}));
   }
 
-  private FilterAggregationBuilder createCategoryAgg(DealSearchParams searchParams) {
-    var categoryAgg =
-        new FilterAggregationBuilder("aggCategory", createFilters(searchParams, "category"));
-    var nestedAgg = createNestedSubAgg("stringFacets", "category");
-    return categoryAgg.subAggregation(nestedAgg);
+  private Aggregation createStoreAgg(DealSearchParams searchParams) {
+    return Aggregation.of(a -> a
+            .filter(f -> f.bool(createFilters(searchParams, "store")))
+            .aggregations(new HashMap<String, Aggregation>() {{
+              put("stringFacets", createNestedSubAgg("stringFacets", "store"));
+            }}));
   }
 
-  private FilterAggregationBuilder createStoreAgg(DealSearchParams searchParams) {
-    var storeAgg = new FilterAggregationBuilder("aggStore", createFilters(searchParams, "store"));
-    var nestedAgg = createNestedSubAgg("stringFacets", "store");
-    return storeAgg.subAggregation(nestedAgg);
+  private Aggregation createPriceAgg(DealSearchParams searchParams) {
+    // Create the ranges using AggregationRange
+    List<AggregationRange> ranges = new ArrayList<>();
+    ranges.add(AggregationRange.of(r -> r.from(0.0).to(1.0)));
+    ranges.add(AggregationRange.of(r -> r.from(1.0).to(5.0)));
+    ranges.add(AggregationRange.of(r -> r.from(5.0).to(10.0)));
+    ranges.add(AggregationRange.of(r -> r.from(10.0).to(20.0)));
+    ranges.add(AggregationRange.of(r -> r.from(20.0).to(50.0)));
+    ranges.add(AggregationRange.of(r -> r.from(50.0).to(100.0)));
+    ranges.add(AggregationRange.of(r -> r.from(100.0).to(250.0)));
+    ranges.add(AggregationRange.of(r -> r.from(250.0).to(500.0)));
+    ranges.add(AggregationRange.of(r -> r.from(500.0).to(1000.0)));
+    ranges.add(AggregationRange.of(r -> r.from(1000.0).to(1500.0)));
+    ranges.add(AggregationRange.of(r -> r.from(1500.0).to(2000.0)));
+    ranges.add(AggregationRange.of(r -> r.from(2000.0)));
+
+    return Aggregation.of(a -> a
+            .filter(f -> f.bool(createFilters(searchParams, "price")))
+            .aggregations(new HashMap<String, Aggregation>() {{
+              put("numberFacets", Aggregation.of(numberFacetsAgg -> numberFacetsAgg
+                      .nested(n -> n.path("numberFacets"))
+                      .aggregations(new HashMap<String, Aggregation>() {{
+                        put("aggSpecial", Aggregation.of(specialAgg -> specialAgg
+                                .filter(f -> f.term(t -> t.field("numberFacets.facetName").value("price")))
+                                .aggregations(new HashMap<String, Aggregation>() {{
+                                  put("names", Aggregation.of(namesAgg -> namesAgg
+                                          .terms(t -> t.field("numberFacets.facetName"))
+                                          .aggregations(new HashMap<String, Aggregation>() {{
+                                            put("values", Aggregation.of(valuesAgg -> valuesAgg
+                                                    .range(r -> r
+                                                            .field("numberFacets.facetValue")
+                                                            .ranges(ranges))));
+                                          }})));
+                                }})));
+                      }})));
+            }}));
   }
 
-  private FilterAggregationBuilder createPriceAgg(DealSearchParams searchParams) {
-    var priceAgg = new FilterAggregationBuilder("aggPrice", createFilters(searchParams, "price"));
-    var facetValues = new RangeAggregationBuilder("values");
-    facetValues
-        .field("numberFacets.facetValue")
-        .keyed(false)
-        .addRange(0, 1)
-        .addRange(1, 5)
-        .addRange(5, 10)
-        .addRange(10, 20)
-        .addRange(20, 50)
-        .addRange(50, 100)
-        .addRange(100, 250)
-        .addRange(250, 500)
-        .addRange(500, 1000)
-        .addRange(1000, 1500)
-        .addRange(1500, 2000)
-        .addUnboundedFrom(2000);
-    var facetNames = new TermsAggregationBuilder("names").field("numberFacets.facetName");
-    facetNames.subAggregation(facetValues);
-    var filterAgg = createFilterAgg("numberFacets.facetName", "price").subAggregation(facetNames);
-    var nestedAgg =
-        new NestedAggregationBuilder("numberFacets", "numberFacets").subAggregation(filterAgg);
-    return priceAgg.subAggregation(nestedAgg);
-  }
-
-  private List<AggregationBuilder> createAggregations(DealSearchParams searchParams) {
-    List<AggregationBuilder> aggregations = new ArrayList<>();
+  private List<Aggregation> createAggregations(DealSearchParams searchParams) {
+    List<Aggregation> aggregations = new ArrayList<>();
     aggregations.add(createAllFiltersAgg(searchParams));
     aggregations.add(createCategoryAgg(searchParams));
     aggregations.add(createPriceAgg(searchParams));
@@ -292,43 +348,67 @@ public class EsDealServiceImpl implements EsDealService {
     return aggregations;
   }
 
-  private Request createSearchRequest(DealSearchParams searchParams, Pageable pageable) {
-    final var request = new Request("GET", SEARCH_DEALS_ENDPOINT);
-    var searchSource = new SearchSourceBuilder();
-    searchSource.from(pageable.getPageNumber()).size(pageable.getPageSize());
-
-    if (searchParams.getSortBy() != null) {
-      searchSource.sort(createSort(searchParams.getSortBy(), searchParams.getOrder()));
-    }
-
-    if (!ObjectUtils.isEmpty(searchParams.getQuery())) {
-      searchSource.query(createBoolQuery(searchParams.getHideExpired(), searchParams.getQuery()));
-    }
-
-    for (var aggregation : createAggregations(searchParams)) {
-      searchSource.aggregation(aggregation);
-    }
-
-    searchSource.postFilter(createFilters(searchParams, null));
-    request.setJsonEntity(searchSource.toString());
-
-    return request;
-  }
-
   @Override
   public JsonNode searchDeals(DealSearchParams searchParams, Pageable pageable) {
-    var request = createSearchRequest(searchParams, pageable);
-    final JsonNode jsonNode;
     try {
-      var response = client.getLowLevelClient().performRequest(request);
-      var responseBody = EntityUtils.toString(response.getEntity());
-      jsonNode = new ObjectMapper().readTree(responseBody);
-    } catch (Exception e) {
+      // Build the search request using the new API
+      SearchRequest.Builder requestBuilder = new SearchRequest.Builder()
+              .index(DEAL_INDEX)
+              .from(pageable.getPageNumber())
+              .size(pageable.getPageSize());
+
+      // Add sort if specified
+      if (searchParams.getSortBy() != null) {
+        SortOrder order = searchParams.getOrder().equals("asc") ? SortOrder.Asc : SortOrder.Desc;
+        if (searchParams.getSortBy().equals("createdAt")) {
+          requestBuilder.sort(createCreatedAtSort(order));
+        } else {
+          requestBuilder.sort(createPriceSort(order));
+        }
+      }
+
+      // Add query if specified
+      if (!ObjectUtils.isEmpty(searchParams.getQuery())) {
+        requestBuilder.query(q -> q.bool(createBoolQuery(searchParams.getHideExpired(), searchParams.getQuery())));
+      }
+
+      // Add aggregations
+      Map<String, Aggregation> aggsMap = new HashMap<>();
+      int i = 0;
+      for (Aggregation agg : createAggregations(searchParams)) {
+        // Use meaningful names for the aggregations
+        String name;
+        switch (i) {
+          case 0:
+            name = "aggAllFilters";
+            break;
+          case 1:
+            name = "aggCategory";
+            break;
+          case 2:
+            name = "aggPrice";
+            break;
+          case 3:
+            name = "aggStore";
+            break;
+          default:
+            name = "agg" + i;
+        }
+        aggsMap.put(name, agg);
+        i++;
+      }
+      requestBuilder.aggregations(aggsMap);
+
+      // Add post filter
+      requestBuilder.postFilter(pf -> pf.bool(createFilters(searchParams, null)));
+
+      SearchResponse<Object> response = esClient.search(requestBuilder.build(), Object.class);
+      return objectMapper.valueToTree(response);
+    } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
-
-    return jsonNode;
   }
+
 
   @Override
   public EsDeal save(EsDeal esDeal) {

@@ -2,8 +2,8 @@ package com.halildurmus.hotdeals.user.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Optional;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.URL;

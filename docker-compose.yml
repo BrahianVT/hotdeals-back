@@ -18,22 +18,26 @@ services:
       #mem_limit: 512m
   elasticsearch:
     container_name: hotdeals_elasticsearch
+    image: elasticsearch:8.14.0
     environment:
       discovery.type: single-node
-      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      ES_JAVA_OPTS: -Xms250m -Xmx250m
+      # Explicitly disable security and SSL for development/testing
       xpack.security.enabled: "false"
-    image: elasticsearch:7.17.4
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
     ports:
       - 9200:9200
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200"]
-      interval: 30s
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s || exit 1" ]
+      interval: 10s
       timeout: 10s
-      retries: 3
-    mem_limit: 1g
+      retries: 5
+      start_period: 30s # Give Elasticsearch more time to start up
+    mem_limit: 700m
 
   redis:
     container_name: hotdeals_redis

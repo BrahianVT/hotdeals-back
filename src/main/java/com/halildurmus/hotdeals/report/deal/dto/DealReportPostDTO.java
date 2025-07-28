@@ -3,7 +3,7 @@ package com.halildurmus.hotdeals.report.deal.dto;
 import com.halildurmus.hotdeals.report.deal.DealReportReason;
 import com.halildurmus.hotdeals.report.dto.ReportDTO;
 import java.util.EnumSet;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
