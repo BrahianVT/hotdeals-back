@@ -28,7 +28,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import org.apache.commons.lang3.ObjectUtils;
 import org.bson.types.ObjectId;
-import org.springdoc.api.annotations.ParameterObject;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
