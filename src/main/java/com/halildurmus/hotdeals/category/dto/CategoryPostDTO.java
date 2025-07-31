@@ -13,7 +13,10 @@ public class CategoryPostDTO {
 
   @Schema(
       description = "Category names",
-      example = "{\"en\": \"Computers\", \"tr\": \"Bilgisayar\"}")
+      example = "{\"en\": \"Computers\", \"tr\": \"Bilgisayar\"}",
+          type = "object",
+          implementation = Map.class
+  )
   @NotNull
   private final Map<String, String> names;
 
@@ -26,7 +29,6 @@ public class CategoryPostDTO {
   private final String category;
 
   @Schema(description = "Category icon ligature", example = "computer")
-  @NotBlank
   private final String iconLigature;
 
   @Schema(description = "Category icon font family", example = "MaterialIcons")
