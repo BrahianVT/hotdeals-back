@@ -14,7 +14,7 @@ db.categories.insertMany([
     _class: 'category'
   },
   {
-    names: {en: 'Abarrotes y Víveres', tr: 'Elektronik '},
+    names: {en: 'Abarrotes y Viveres', tr: 'Elektronik '},
     parent: '/',
     category: '/abarrotes_Viveres',
     iconLigature: 'devices_baseline',
@@ -102,7 +102,25 @@ db.categories.insertMany([
 db.users.insertOne({
   "uid": "b91zCBlN7yNDph7mT9XRiPAaWGd2",  // The UID from your Firebase token
   "email": "pumasemj@hotmail.com",
-  "nickname": "MrWaylon677",
+  "nickname": "admin",
+  "avatar": "https://www.gravatar.com/avatar",
+  "createdAt": new Date(),
+  "_class": "user"  // This might be important for Spring Data MongoDB
+})
+
+db.users.insertOne({
+  "uid": "Ck9fxGWhT0T4qYoR4zooF72pLz73",  // The UID from your Firebase token
+  "email": "bvelazquez5605@gmail.com",
+  "nickname": "user",
+  "avatar": "https://www.gravatar.com/avatar",
+  "createdAt": new Date(),
+  "_class": "user"  // This might be important for Spring Data MongoDB
+})
+
+db.users.insertOne({
+  "uid": "FFUpcm8hfZUZDWg6GHunuFNQw8u2",  // The UID from your Firebase token
+  "email": "pumasbra@hotmail.com",
+  "nickname": "moderator",
   "avatar": "https://www.gravatar.com/avatar",
   "createdAt": new Date(),
   "_class": "user"  // This might be important for Spring Data MongoDB
@@ -113,12 +131,14 @@ db.users.insertOne({
 var ceda = db.stores.findOne({name: 'CEDA'})
 
 
-var user = db.users.findOne()
+var admin = db.users.findOne({ email: "pumasemj@hotmail.com" });
+var user = db.users.findOne({email: "bvelazquez5605@gmail.com"});
+var mod = db.users.findOne({email: "pumasbra@hotmail.com"});
 
 
 db.deals.insertMany([
   {
-    postedBy: user._id,
+    postedBy: admin._id,
     store: ceda._id,
     dealScore: 15,
     upvoters: [],
@@ -136,6 +156,7 @@ db.deals.insertMany([
       'https://m.media-amazon.com/images/I/81wkDEMzj+L._AC_SL1500_.jpg'
     ],
     views: 10,
+    location: "Z-56",
     tags: ['/flores'],
     createdAt: new Date(),
     _class: 'deal'
@@ -159,11 +180,12 @@ db.deals.insertMany([
       'https://placehold.co/600x400'
     ],
     views: 85,
+    location: "Z-56",
     createdAt: new Date(),
     _class: 'deal'
   },
   {
-    postedBy: user._id,
+    postedBy: mod._id,
     store: ceda._id,
     dealScore: 23,
     upvoters: [],
@@ -181,13 +203,14 @@ db.deals.insertMany([
       'https://placehold.co/400'
     ],
     views: 210,
+    location: "T-34",
     tags: ['/manzana'],
     createdAt: new Date(),
     updatedAt: new Date(),
     _class: 'deal'
   },
   {
-      postedBy: user._id,
+      postedBy: admin._id,
       store: ceda._id,
       dealScore: 100,
       upvoters: [],
@@ -205,6 +228,7 @@ db.deals.insertMany([
         'https://placehold.co/400'
       ],
       views: 210,
+      location: "R-45",
       createdAt: new Date(),
       _class: 'deal'
     },
@@ -227,11 +251,12 @@ db.deals.insertMany([
             'https://placehold.co/400'
           ],
           views: 0,
+          location: "A-353",
           createdAt: new Date(),
           _class: 'deal'
         },
   {
-                  postedBy: user._id,
+                  postedBy: mod._id,
                   store: ceda._id,
                   dealScore: 100,
                   upvoters: [],
@@ -249,11 +274,12 @@ db.deals.insertMany([
                     'https://placehold.co/400'
                   ],
                   views: 0,
+                  location: "S-56",
                   createdAt: new Date(),
                   _class: 'deal'
                 },
   {
-                                  postedBy: user._id,
+                                  postedBy: admin._id,
                                   store: ceda._id,
                                   dealScore: 100,
                                   upvoters: [],
@@ -271,6 +297,7 @@ db.deals.insertMany([
                                     'https://placehold.co/400'
                                   ],
                                   views: 0,
+                                  location: "D-6",
                                   createdAt: new Date(),
                                   _class: 'deal'
                                 },
@@ -293,6 +320,7 @@ db.deals.insertMany([
                                                                     'https://placehold.co/400'
                                                                   ],
                                                                   views: 0,
+                                                                  location: "Z-56",
                                                                   createdAt: new Date(),
                                                                   _class: 'deal'
                                                                 }

@@ -79,4 +79,7 @@ public class DealGetDTO {
 
   @Schema(description = "Deal createdAt", example = "2021-06-30T16:36:59.713Z")
   private final Instant createdAt;
+
+  @Schema(description = "location, is the hallway ", example = "I-3")
+  private final String location;
 }
