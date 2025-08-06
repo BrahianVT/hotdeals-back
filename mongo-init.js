@@ -307,7 +307,7 @@ db.deals.insertMany([
                                                                   dealScore: 100,
                                                                   upvoters: [],
                                                                   downvoters: [],
-                                                                  category: ' /viga',
+                                                                  category: '/viga',
                                                                   title: 'pescado kilo',
                                                                   description: 'pescado kilo',
                                                                   originalPrice: 124.99,
