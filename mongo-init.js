@@ -111,7 +111,7 @@ db.users.insertOne({
 db.users.insertOne({
   "uid": "Ck9fxGWhT0T4qYoR4zooF72pLz73",  // The UID from your Firebase token
   "email": "bvelazquez5605@gmail.com",
-  "nickname": "user",
+  "nickname": "user 2",
   "avatar": "https://www.gravatar.com/avatar",
   "createdAt": new Date(),
   "_class": "user"  // This might be important for Spring Data MongoDB

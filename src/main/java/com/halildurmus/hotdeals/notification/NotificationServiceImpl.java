@@ -87,11 +87,14 @@ public class NotificationServiceImpl implements NotificationService {
       SendResponse sendResponse = batchResponse.getResponses().get(i);
       if (!sendResponse.isSuccessful() && sendResponse.getException() != null) {
         // It's good to check if getMessagingErrorCode() is not null before calling name()
-        String errorCode = (sendResponse.getException().getMessagingErrorCode() != null) ?
-                sendResponse.getException().getMessagingErrorCode().name() : "UNKNOWN_ERROR";
 
+        FirebaseMessagingException fme = sendResponse.getException();
+        String errorCode = (fme.getMessagingErrorCode() != null) ?
+                fme.getMessagingErrorCode().name() : "UNKNOWN_ERROR";
+
+        fme.printStackTrace();
         // Log the failure for debugging
-        log.warn("Failed to send message to token {}: ErrorCode={}", notification.getTokens().get(i), errorCode);
+        log.warn("Failed to send message to token {}: ErrorCode={}, Message={}", notification.getTokens().get(i), errorCode, fme.getMessage());
 
         if (errorCode.equals("INVALID_ARGUMENT") || errorCode.equals("UNREGISTERED")) {
           var userUid = notification.getData().get("uid");
@@ -100,7 +103,7 @@ public class NotificationServiceImpl implements NotificationService {
           if (userUid != null) {
             var fcmTokenParams = FCMTokenParams.builder().token(fcmToken).build();
             userService.deleteFCMToken(userUid, fcmTokenParams);
-            log.debug(fcmToken + " was removed successfully from user " + userUid);
+              log.debug("{} was removed successfully from user {}", fcmToken, userUid);
           } else {
             log.warn("Could not remove FCM token {} as 'uid' was missing from notification data.", fcmToken);
           }
