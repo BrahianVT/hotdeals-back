@@ -58,6 +58,6 @@ public interface CommentRepository extends MongoRepository<Comment, String> {
   @Cacheable(
       value = "comments:findByDealIdOrderByCreatedAt",
       key = "T(java.lang.String).format('%s-%s', #dealId, #pageable)",
-      condition = "#dealId != null")
+          condition = "#dealId != null && #pageable.isPaged()") // cache when pageable is found exclude: unpaged
   Page<Comment> findByDealIdOrderByCreatedAt(ObjectId dealId, Pageable pageable);
 }
