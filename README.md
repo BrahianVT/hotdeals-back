@@ -40,7 +40,7 @@ To get a local copy up and running follow these simple steps.
 
 ### Prerequisites
 
-- Java 11+
+- Java 21+
 - [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - You need to create a [Firebase](https://firebase.google.com) account and
   setup [Firebase Authentication](https://firebase.google.com/products/auth)
@@ -168,3 +168,33 @@ tail -n 20 -f app.log
 
 kill process:  
 kill -9 $(lsof -t -i :8080)
+
+## Redis
+docker exec -it hotdeals_redis redis-cli
+
+See all keys  
+KEYS *  
+Count total keys  
+DBSIZE
+Get info about Redis  
+INFO  
+Check memory usage   
+INFO memory   
+
+# Look for category cache keys
+KEYS "*findAllByCategoryStartsWithOrderByCreatedAtDesc*"
+
+# Alternative patterns to try
+KEYS "*Category*"
+KEYS "*ByCategory*"
+KEYS "*StartsWith*"
+
+## examples remove
+
+## This should work in Redis CLI
+EVAL "local keys = redis.call('keys', '*findAllByCategoryStartsWithOrderByCreatedAtDesc*') for i=1,#keys do redis.call('del', keys[i]) end return #keys" 0
+
+
+## remove all in current database
+
+FLUSHDB

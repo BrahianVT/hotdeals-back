@@ -110,4 +110,21 @@ public class RoleServiceImpl implements RoleService {
 
     return usersWithRoles;
   }
+
+
+  @Override
+  public UserWithRoles viewAllRolesUser(String uid) throws FirebaseAuthException {
+    try {
+      UserRecord user = firebaseAuth.getUser(uid);
+      var roles =  new HashMap<>(user.getCustomClaims())
+              .entrySet()
+              .stream()
+              .filter(entry -> entry.getValue() instanceof Boolean && (Boolean) entry.getValue())
+              .map(entry -> Role.valueOf(entry.getKey()))
+              .collect(Collectors.toSet());
+      return new UserWithRoles(user.getUid(), user.getEmail(), user.getDisplayName(), roles);
+    } catch (FirebaseAuthException e) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", e);
+    }
+  }
 }

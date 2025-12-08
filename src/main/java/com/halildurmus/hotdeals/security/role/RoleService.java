@@ -11,4 +11,5 @@ public interface RoleService {
 
   void delete(String uid, Role role);
   List<RoleServiceImpl.UserWithRoles> viewAllRoles() throws FirebaseAuthException;
+  RoleServiceImpl.UserWithRoles viewAllRolesUser(String uid) throws FirebaseAuthException;
 }

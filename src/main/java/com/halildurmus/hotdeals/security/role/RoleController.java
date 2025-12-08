@@ -14,8 +14,8 @@ import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+import java.util.Set;
 
 @Tag(name = "roles")
 @SecurityRequirement(name = "bearerAuth")
@@ -50,7 +50,7 @@ public class RoleController {
 
     @GetMapping("/viewAll")
     @IsSuper
-    @Operation(summary = "Check all the roles for user in firebase")
+    @Operation(summary = "Check all the roles for all users in firebase")
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
@@ -66,6 +66,25 @@ public class RoleController {
     public List<RoleServiceImpl.UserWithRoles> viewAllRoles() throws FirebaseAuthException {
         return service.viewAllRoles();
     }
+
+    @IsSuper
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successful operation",
+                    content =
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = RoleServiceImpl.UserWithRoles.class)))),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
+    })
+    @GetMapping("/{uid}")
+    @Operation(summary = "Check all the roles for single user firebase")
+public RoleServiceImpl.UserWithRoles getUserRoles(@PathVariable String uid) throws FirebaseAuthException {
+    return service.viewAllRolesUser(uid);
+}
 
   @DeleteMapping
   @ResponseStatus(HttpStatus.NO_CONTENT)
