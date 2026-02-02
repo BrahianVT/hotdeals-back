@@ -11,4 +11,6 @@ public class DealPatchDTO {
   @Schema(description = "Deal status", example = "EXPIRED")
   @NotNull
   private DealStatus status;
+
+  private Boolean isAdminOrMod;
 }

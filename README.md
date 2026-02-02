@@ -196,5 +196,14 @@ EVAL "local keys = redis.call('keys', '*findAllByCategoryStartsWithOrderByCreate
 
 
 ## remove all in current database
+FLUSHDB  
 
-FLUSHDB
+## ElasticSearch
+
+docker exec -it hotdeals_elasticsearch bash  
+
+http://144.24.20.84:8080/deals/suggestions?query=test   
+
+http://144.24.20.84:8080/deals/searches?query=test  
+
+

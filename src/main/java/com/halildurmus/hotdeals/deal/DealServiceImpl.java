@@ -157,15 +157,17 @@ public class DealServiceImpl implements DealService {
   public Deal patch(String id, JsonPatch patch) {
     var deal = repository.findById(id).orElseThrow(DealNotFoundException::new);
     var user = securityService.getUser();
-    if (!user.getId().equals(deal.getPostedBy().toString())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
-    }
 
     try {
       var patchedDeal = applyPatchToDeal(patch);
       deal.setStatus(patchedDeal.getStatus());
+
       repository.save(deal);
       esDealRepository.save(new EsDeal(deal));
+      if (!patchedDeal.getIsAdminOrMod()  && !user.getId().equals(deal.getPostedBy().toString())) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
+      }
+
     } catch (Exception e) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
     }
