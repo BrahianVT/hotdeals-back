@@ -12,6 +12,9 @@ public interface DealService {
   @IsSuper
   Page<Deal> findAll(Pageable pageable);
 
+  @IsSuper
+  Page<Deal> getPendingDeals(Pageable pageable);
+
   int countDealsByPostedBy(ObjectId postedBy);
 
   int countDealsByStore(ObjectId storeId);

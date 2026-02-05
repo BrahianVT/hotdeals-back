@@ -61,6 +61,11 @@ public class DealServiceImpl implements DealService {
   }
 
   @Override
+  public Page<Deal> getPendingDeals(Pageable pageable) {
+    return repository.findAllByStatusEqualsOrderByCreatedAtDesc(DealStatus.PENDING, pageable);
+  }
+
+  @Override
   public int countDealsByPostedBy(ObjectId postedBy) {
     return repository.countDealsByPostedBy(postedBy);
   }

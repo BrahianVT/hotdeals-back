@@ -112,6 +112,28 @@ public class DealController {
     return service.countDealsByPostedBy(new ObjectId(postedBy));
   }
 
+    @GetMapping("/pending")
+    @IsSuper
+    @Operation(
+            summary = "Returns all pending deals",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successful operation",
+                    content =
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = DealGetDTO.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
+    })
+    public List<DealGetDTO> getPendingDeals(@ParameterObject Pageable pageable) {
+        return service.getPendingDeals(pageable).stream()
+                .map(mapStructMapper::dealToDealGetDTO)
+                .toList();
+    }
+
   @GetMapping("/count/byStoreId")
   @Operation(summary = "Returns the number of deals a store has")
   @ApiResponses({
