@@ -104,7 +104,7 @@ public class Deal extends DateAudit {
   @URL
   private String dealUrl;
 
-  @Default private DealStatus status = DealStatus.ACTIVE;
+  private DealStatus status;
 
   @Schema(description = "Deal photo URLs", example = "[\"https://www.gravatar.com/avatar/1\", \"https://www.gravatar.com/avatar/2\"]")
   private List<String> photos = new ArrayList<>();

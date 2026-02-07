@@ -1,6 +1,7 @@
 package com.halildurmus.hotdeals.deal.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.halildurmus.hotdeals.deal.DealStatus;
 import com.halildurmus.hotdeals.util.ObjectIdJsonSerializer;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -64,4 +65,7 @@ public class DealPostDTO {
 
   @Schema(description = "location, is the hallway ", example = "I-3")
   private final String location;
+
+  @Schema(description = "Deal status", example = "ACTIVE")
+  private final DealStatus status;
 }
