@@ -1,6 +1,8 @@
 package com.halildurmus.hotdeals.security.role;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import com.halildurmus.hotdeals.security.SecurityService;
+import com.halildurmus.hotdeals.user.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -23,7 +25,10 @@ import java.util.Set;
 @RequestMapping("/roles")
 public class RoleController {
 
-  @Autowired private RoleService service;
+    @Autowired private SecurityService securityService;
+
+
+    @Autowired private RoleService service;
 
   @PutMapping
   @IsSuper
@@ -109,4 +114,23 @@ public RoleServiceImpl.UserWithRoles getUserRoles(@PathVariable String uid) thro
       @Parameter(description = "User role") @RequestParam Role role) {
     service.delete(uid, role);
   }
+
+    @GetMapping("/me")
+    @Operation(
+            summary = "Returns the authenticated user's roles",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successful operation",
+                    content =
+                    @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = RoleServiceImpl.UserWithRoles.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    })
+    public RoleServiceImpl.UserWithRoles getAuthenticatedUserRoles() throws FirebaseAuthException {
+        User user = securityService.getUser();
+        return service.viewAllRolesUser(user.getUid());
+    }
 }
