@@ -268,4 +268,9 @@ public class DealServiceImpl implements DealService {
 
     return mongoTemplate.findAndModify(query, update, options, Deal.class);
   }
+
+  @Override
+  public Page<Deal> getDealsByStatus(DealStatus status, Pageable pageable) {
+    return repository.findAllByStatusEqualsOrderByCreatedAtDesc(status, pageable);
+  }
 }

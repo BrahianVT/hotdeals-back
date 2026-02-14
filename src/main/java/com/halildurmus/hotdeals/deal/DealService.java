@@ -39,4 +39,7 @@ public interface DealService {
   void delete(String id);
 
   Deal vote(String id, DealVoteType voteType);
+
+  Page<Deal> getDealsByStatus(DealStatus status, Pageable pageable);
+
 }

@@ -705,6 +705,28 @@ public class DealController {
     return mapStructMapper.dealToDealGetDTO(deal);
   }
 
+    @GetMapping("/status/{status}")
+    @Operation(summary = "Returns deals by status")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successful operation",
+                    content =
+                    @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = DealGetDTO.class)))),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content)
+    })
+    public List<DealGetDTO> getDealsByStatus(
+            @Parameter(description = "Deal status", example = "PENDING")
+            @PathVariable DealStatus status,
+            @ParameterObject Pageable pageable) {
+        return service.getDealsByStatus(status, pageable)
+                .stream()
+                .map(mapStructMapper::dealToDealGetDTO)
+                .collect(Collectors.toList());
+    }
+
   private Deal convertToEntity(String id, DealPostDTO dealPostDTO) {
     // Fetch the deal from the db and set the missing properties from it
     var originalDeal = service.findById(id).orElseThrow(DealNotFoundException::new);
