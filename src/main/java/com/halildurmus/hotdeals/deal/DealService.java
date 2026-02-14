@@ -1,6 +1,7 @@
 package com.halildurmus.hotdeals.deal;
 
 import com.github.fge.jsonpatch.JsonPatch;
+import com.halildurmus.hotdeals.deal.dto.DealPatchDTO;
 import com.halildurmus.hotdeals.security.role.IsSuper;
 import java.util.Optional;
 import org.bson.types.ObjectId;
@@ -31,7 +32,7 @@ public interface DealService {
 
   Deal create(Deal deal);
 
-  Deal patch(String id, JsonPatch patch);
+  Deal patch(String id, DealPatchDTO dealPatchDTO);
 
   Deal update(Deal deal);
 

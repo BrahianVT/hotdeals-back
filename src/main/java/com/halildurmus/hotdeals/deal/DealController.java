@@ -7,6 +7,7 @@ import com.halildurmus.hotdeals.comment.dto.CommentGetDTO;
 import com.halildurmus.hotdeals.comment.dto.CommentPostDTO;
 import com.halildurmus.hotdeals.comment.dto.CommentsDTO;
 import com.halildurmus.hotdeals.deal.dto.DealGetDTO;
+import com.halildurmus.hotdeals.deal.dto.DealPatchDTO;
 import com.halildurmus.hotdeals.deal.dto.DealPostDTO;
 import com.halildurmus.hotdeals.deal.es.EsDealService;
 import com.halildurmus.hotdeals.exception.CommentNotFoundException;
@@ -413,7 +414,7 @@ public class DealController {
     return mapStructMapper.dealToDealGetDTO(deal);
   }
 
-  @PatchMapping(value = "/{id}", consumes = "application/json-patch+json")
+  @PatchMapping(value = "/{id}", consumes = "application/json")
   @Operation(
       summary = "Updates a deal's status",
       security = @SecurityRequirement(name = "bearerAuth"))
@@ -440,8 +441,8 @@ public class DealController {
           @IsObjectId
           @PathVariable
           String id,
-      @RequestBody JsonPatch patch) {
-    return mapStructMapper.dealToDealGetDTO(service.patch(id, patch));
+      @RequestBody DealPatchDTO dealPatchDTO) {
+    return mapStructMapper.dealToDealGetDTO(service.patch(id, dealPatchDTO));
   }
 
   @PutMapping("/{id}")

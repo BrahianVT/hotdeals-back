@@ -24,6 +24,7 @@ import com.halildurmus.hotdeals.BaseControllerUnitTest;
 import com.halildurmus.hotdeals.comment.Comment;
 import com.halildurmus.hotdeals.comment.CommentService;
 import com.halildurmus.hotdeals.comment.dummy.DummyComments;
+import com.halildurmus.hotdeals.deal.dto.DealPatchDTO;
 import com.halildurmus.hotdeals.deal.dto.DealPostDTO;
 import com.halildurmus.hotdeals.deal.dummy.DummyDeals;
 import com.halildurmus.hotdeals.deal.es.EsDealService;
@@ -616,19 +617,21 @@ public class DealControllerTest extends BaseControllerUnitTest {
   public void patchesGivenDealsStatus() throws Exception {
     var deal = DummyDeals.deal1;
     deal.setStatus(DealStatus.EXPIRED);
-    when(dealService.patch(anyString(), any(JsonPatch.class))).thenReturn(deal);
-    var jsonPatch = "[{\"op\": \"replace\", \"path\": \"/status\", \"value\": \"EXPIRED\"}]";
+    when(dealService.patch(anyString(), any(DealPatchDTO.class))).thenReturn(deal);
+    var jsonPatch = """
+             {"status": "ACTIVE", "isAdminOrMod": "true"}
+            """;
     var request =
         patch("/deals/" + deal.getId())
             .accept(MediaType.APPLICATION_JSON)
             .content(jsonPatch)
-            .contentType("application/json-patch+json");
+            .contentType("application/json");
 
     mvc.perform(request)
         .andDo(print())
         .andExpect(status().isOk())
         .andExpect(content().contentType("application/json"))
-        .andExpect(jsonPath("$.*", hasSize(17)))
+        .andExpect(jsonPath("$.*", hasSize(19)))
         .andExpect(jsonPath("$.id").value(deal.getId()))
         .andExpect(jsonPath("$.postedBy").value(deal.getPostedBy().toString()))
         .andExpect(jsonPath("$.title").value(deal.getTitle()))

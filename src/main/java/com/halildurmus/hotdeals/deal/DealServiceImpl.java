@@ -147,36 +147,24 @@ public class DealServiceImpl implements DealService {
     return validatedTags;
   }
 
-  private DealPatchDTO applyPatchToDeal(JsonPatch patch)
-      throws JsonPatchException, JsonProcessingException {
-    var dealPatchDTO = new DealPatchDTO();
-    // Convert the deal to a JsonNode
-    var target = objectMapper.convertValue(dealPatchDTO, JsonNode.class);
-    // Apply the patch to the deal
-    var patched = patch.apply(target);
-    // Convert the JsonNode to a DealPatchDTO instance
-    return objectMapper.treeToValue(patched, DealPatchDTO.class);
-  }
+
 
   @Override
-  public Deal patch(String id, JsonPatch patch) {
+  public Deal patch(String id, DealPatchDTO dealPatchDTO) {
     var deal = repository.findById(id).orElseThrow(DealNotFoundException::new);
     var user = securityService.getUser();
 
-    try {
-      var patchedDeal = applyPatchToDeal(patch);
-      deal.setStatus(patchedDeal.getStatus());
-
-      repository.save(deal);
-      esDealRepository.save(new EsDeal(deal));
-      if (!patchedDeal.getIsAdminOrMod()  && !user.getId().equals(deal.getPostedBy().toString())) {
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
-      }
-
-    } catch (Exception e) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+    if (!dealPatchDTO.getIsAdminOrMod()  && !user.getId().equals(deal.getPostedBy().toString())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
     }
 
+    // Update fields from DTO
+    if (dealPatchDTO.getStatus() != null) {
+      deal.setStatus(dealPatchDTO.getStatus());
+    }
+
+    repository.save(deal);
+    esDealRepository.save(new EsDeal(deal));
     return deal;
   }
 
