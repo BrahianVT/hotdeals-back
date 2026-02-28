@@ -1,8 +1,11 @@
 package com.halildurmus.hotdeals.notification;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.messaging.*;
 import com.google.firebase.messaging.AndroidConfig.Priority;
 import com.halildurmus.hotdeals.security.SecurityService;
+import com.halildurmus.hotdeals.security.role.Role;
+import com.halildurmus.hotdeals.security.role.RoleService;
 import com.halildurmus.hotdeals.user.FCMTokenParams;
 import com.halildurmus.hotdeals.user.UserService;
 
@@ -24,6 +27,8 @@ public class NotificationServiceImpl implements NotificationService {
   @Autowired private SecurityService securityService;
 
   @Autowired private UserService userService;
+
+  @Autowired private RoleService roleService;
 
 
   // This method will now create a single MulticastMessage
@@ -92,7 +97,7 @@ public class NotificationServiceImpl implements NotificationService {
         String errorCode = (fme.getMessagingErrorCode() != null) ?
                 fme.getMessagingErrorCode().name() : "UNKNOWN_ERROR";
 
-        fme.printStackTrace();
+
         // Log the failure for debugging
         log.warn("Failed to send message to token {}: ErrorCode={}, Message={}", notification.getTokens().get(i), errorCode, fme.getMessage());
 
@@ -113,5 +118,24 @@ public class NotificationServiceImpl implements NotificationService {
 
 
     return batchResponse.getSuccessCount();
+  }
+
+  @Override
+  public int sendToRole(Role role, Notification notification) throws FirebaseAuthException {
+    // Get all users with the specified role from Firebase
+    var usersWithRole = roleService.getUsersByRole(role);
+
+    // Collect all FCM tokens from MongoDB users
+    List<String> allTokens = new ArrayList<>();
+    for (var userWithRole : usersWithRole) {
+      var userOpt = userService.findByUid(userWithRole.getUid());
+      if (userOpt.isPresent() && userOpt.get().getFcmTokens() != null) {
+        allTokens.addAll(userOpt.get().getFcmTokens().values());
+      }
+    }
+    // Send notification to all collected tokens
+    notification.setTokens(allTokens);
+    return send(notification);
+
   }
 }

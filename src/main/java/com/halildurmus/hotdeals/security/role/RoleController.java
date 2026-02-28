@@ -17,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.Set;
 
 @Tag(name = "roles")
 @SecurityRequirement(name = "bearerAuth")
@@ -132,5 +131,25 @@ public RoleServiceImpl.UserWithRoles getUserRoles(@PathVariable String uid) thro
     public RoleServiceImpl.UserWithRoles getAuthenticatedUserRoles() throws FirebaseAuthException {
         User user = securityService.getUser();
         return service.viewAllRolesUser(user.getUid());
+    }
+
+    @GetMapping("/users-by-role/{role}")
+    @IsSuper
+    @Operation(summary = "Get all users with a specific role")
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successful operation",
+                    content = @Content(
+                            mediaType = "application/json",
+                            array = @ArraySchema(schema = @Schema(implementation = RoleServiceImpl.UserWithRoles.class)))),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+            @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+            @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
+    })
+    public List<RoleServiceImpl.UserWithRoles> getUsersByRole(
+            @Parameter(description = "User role to filter by", example = "ROLE_MODERATOR")
+            @PathVariable Role role) throws FirebaseAuthException {
+        return service.getUsersByRole(role);
     }
 }

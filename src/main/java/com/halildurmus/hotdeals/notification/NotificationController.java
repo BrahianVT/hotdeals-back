@@ -1,5 +1,8 @@
 package com.halildurmus.hotdeals.notification;
 
+import com.google.firebase.auth.FirebaseAuthException;
+import com.halildurmus.hotdeals.notification.dto.RoleNotificationDTO;
+import com.halildurmus.hotdeals.security.role.IsSuper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,5 +56,23 @@ public class NotificationController {
           HttpStatus.BAD_REQUEST, "body or bodyLocKey parameters cannot be empty");
     }
     return notificationService.send(notification);
+  }
+
+  @PostMapping("/send-to-role")
+  @ResponseStatus(HttpStatus.CREATED)
+  @IsSuper
+  @Operation(summary = "Sends a push notification to all users with a specific role")
+  @ApiResponses({
+          @ApiResponse(
+                  responseCode = "201",
+                  description = "Push notification sent",
+                  content = @Content(schema = @Schema(type = "integer", defaultValue = "5"))),
+          @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+          @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+          @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
+  })
+  public Integer sendNotificationToRole(@Valid @RequestBody RoleNotificationDTO request)
+          throws FirebaseAuthException {
+    return notificationService.sendToRole(request.getRole(), request.getNotification());
   }
 }

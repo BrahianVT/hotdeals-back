@@ -127,4 +127,11 @@ public class RoleServiceImpl implements RoleService {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", e);
     }
   }
+
+  @Override
+  public List<UserWithRoles> getUsersByRole(Role role) throws FirebaseAuthException {
+    return viewAllRoles().stream()
+            .filter(user -> user.getRoles().contains(role))
+            .collect(Collectors.toList());
+  }
 }
