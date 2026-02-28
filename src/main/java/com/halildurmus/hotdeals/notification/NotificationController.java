@@ -1,7 +1,7 @@
 package com.halildurmus.hotdeals.notification;
 
 import com.google.firebase.auth.FirebaseAuthException;
-import com.halildurmus.hotdeals.notification.dto.RoleNotificationDTO;
+import com.halildurmus.hotdeals.notification.dto.RoleNotificationRequest;
 import com.halildurmus.hotdeals.security.role.IsSuper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -71,7 +71,7 @@ public class NotificationController {
           @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
           @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
   })
-  public Integer sendNotificationToRole(@Valid @RequestBody RoleNotificationDTO request)
+  public Integer sendNotificationToRole(@Valid @RequestBody RoleNotificationRequest request)
           throws FirebaseAuthException {
     return notificationService.sendToRole(request.getRole(), request.getNotification());
   }
