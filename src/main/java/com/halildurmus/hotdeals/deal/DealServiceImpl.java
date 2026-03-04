@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.fge.jsonpatch.JsonPatch;
 import com.github.fge.jsonpatch.JsonPatchException;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.halildurmus.hotdeals.category.Category;
 import com.halildurmus.hotdeals.category.CategoryRepository;
 import com.halildurmus.hotdeals.comment.CommentService;
@@ -22,6 +23,9 @@ import com.halildurmus.hotdeals.security.SecurityService;
 
 import java.util.*;
 
+import com.halildurmus.hotdeals.security.role.Role;
+import com.halildurmus.hotdeals.security.role.RoleService;
+import com.halildurmus.hotdeals.security.role.RoleServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +58,7 @@ public class DealServiceImpl implements DealService {
   @Autowired private MongoTemplate mongoTemplate;
 
   @Autowired private SecurityService securityService;
+  @Autowired private RoleService roleService;
 
   @Override
   public Page<Deal> findAll(Pageable pageable) {
@@ -171,12 +176,27 @@ public class DealServiceImpl implements DealService {
   @Override
   public Deal update(Deal deal) {
     var user = securityService.getUser();
-    if (!user.getId().equals(deal.getPostedBy().toString())) {
+    Deal existingDeal = repository.findById(deal.getId())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deal not found"));
+
+    // Get user's roles from Firebase using RoleService
+      RoleServiceImpl.UserWithRoles userWithRoles = null;
+      try {
+          userWithRoles = roleService.viewAllRolesUser(user.getUid());
+      } catch (FirebaseAuthException e) {
+          throw new RuntimeException(e);
+      }
+
+    boolean isAdminOrMod = userWithRoles.getRoles().contains(Role.ROLE_ADMIN) ||
+            userWithRoles.getRoles().contains(Role.ROLE_MODERATOR)
+            || userWithRoles.getRoles().contains(Role.ROLE_SUPER);
+
+    // Check if user is owner OR has admin/mod role
+    boolean isOwner = user.getId().equals(existingDeal.getPostedBy().toString());
+    if (!isOwner && !isAdminOrMod) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
     }
 
-    Deal existingDeal = repository.findById(deal.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deal not found"));
 
     if(deal.getTags() != null && !deal.getTags().isEmpty() &&  !deal.getTags().equals(existingDeal.getTags())) {
       deal.setTags(validatedTags(deal.getTags()));
