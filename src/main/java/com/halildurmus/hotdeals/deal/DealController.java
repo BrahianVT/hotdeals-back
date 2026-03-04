@@ -361,12 +361,20 @@ public class DealController {
     suggestions
         .elements()
         .forEachRemaining(
-            element ->
-                searchSuggestions.add(
-                    SearchSuggestion.builder()
-                        .id(element.get("_id").asText())
-                        .title(element.get("_source").get("title").asText())
-                        .build()));
+            element -> {
+                var source = element.get("_source");
+                if (source != null){
+                    var titleNode = source.get("title");
+                    if ( titleNode != null) {
+                        searchSuggestions.add(
+                                SearchSuggestion.builder()
+                                        .id(element.get("_id").asText())
+                                        .title(element.get("_source").get("title").asText())
+                                        .build());
+                    }
+                }
+            });
+
 
     return searchSuggestions;
   }
