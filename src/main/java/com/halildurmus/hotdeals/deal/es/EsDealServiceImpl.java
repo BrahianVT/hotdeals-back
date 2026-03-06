@@ -23,6 +23,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.*;
+import jakarta.json.stream.JsonGenerator;
+import java.io.StringWriter;
 
 @Slf4j
 @Service
@@ -31,10 +33,14 @@ public class EsDealServiceImpl implements EsDealService {
   private static final int MAX_SUGGESTION = 5;
   private static final String DEAL_INDEX = "deal";
 
-  @Autowired private DealRepository dealRepository;
-  @Autowired private EsDealRepository repository;
-  @Autowired private ElasticsearchClient esClient;
-  @Autowired private ObjectMapper objectMapper;
+  @Autowired
+  private DealRepository dealRepository;
+  @Autowired
+  private EsDealRepository repository;
+  @Autowired
+  private ElasticsearchClient esClient;
+  @Autowired
+  private ObjectMapper objectMapper;
 
   @Override
   public Page<EsDeal> findAll(Pageable pageable) {
@@ -43,24 +49,23 @@ public class EsDealServiceImpl implements EsDealService {
 
   private MultiMatchQuery createAutocompleteQuery(String query) {
     return MultiMatchQuery.of(m -> m
-            .query(query)
-            .fields("title", "title._2gram", "title._3gram")
-            .type(TextQueryType.BoolPrefix)
-    );
+        .query(query)
+        .fields("title", "title._2gram", "title._3gram")
+        .type(TextQueryType.BoolPrefix));
   }
 
   @Override
   public JsonNode getSuggestions(String query) {
     try {
       SearchRequest request = SearchRequest.of(r -> r
-              .index(DEAL_INDEX)
-              .size(MAX_SUGGESTION)
-              .query(q -> q.multiMatch(createAutocompleteQuery(query)))
-              .source(s -> s.filter(f -> f.includes("title")))
-      );
+          .index(DEAL_INDEX)
+          .size(MAX_SUGGESTION)
+          .query(q -> q.multiMatch(createAutocompleteQuery(query)))
+          .source(s -> s.filter(f -> f.includes("title"))));
 
       SearchResponse<Object> response = esClient.search(request, Object.class);
-      return objectMapper.valueToTree(response.hits().hits());
+      JsonNode jsonResponse = serializeResponseToJsonNode(response);
+      return jsonResponse.get("hits").get("hits");
     } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
@@ -69,17 +74,13 @@ public class EsDealServiceImpl implements EsDealService {
   private NestedQuery createStringFacetFilter(String facetName, String facetValue) {
     String facetGroup = "stringFacets";
     return NestedQuery.of(n -> n
-            .path(facetGroup)
-            .scoreMode(ChildScoreMode.Avg)
-            .query(q -> q
-                    .bool(b -> b
-                            .must(List.of(
-                                    Query.of(q1 -> q1.term(t -> t.field(facetGroup + ".facetName").value(facetName))),
-                                    Query.of(q2 -> q2.term(t -> t.field(facetGroup + ".facetValue").value(facetValue)))
-                            ))
-                    )
-            )
-    );
+        .path(facetGroup)
+        .scoreMode(ChildScoreMode.Avg)
+        .query(q -> q
+            .bool(b -> b
+                .must(List.of(
+                    Query.of(q1 -> q1.term(t -> t.field(facetGroup + ".facetName").value(facetName))),
+                    Query.of(q2 -> q2.term(t -> t.field(facetGroup + ".facetValue").value(facetValue))))))));
   }
 
   private NestedQuery createNumberFacetFilter(String facetName, Double from, Double to) {
@@ -89,8 +90,8 @@ public class EsDealServiceImpl implements EsDealService {
     queries.add(Query.of(q -> q.term(t -> t.field(facetGroup + ".facetName").value(facetName))));
 
     RangeQuery.Builder rangeBuilder = new RangeQuery.Builder()
-            .field(facetGroup + ".facetValue")
-            .gte(JsonData.of(from));
+        .field(facetGroup + ".facetValue")
+        .gte(JsonData.of(from));
 
     if (to != null) {
       rangeBuilder.lt(JsonData.of(to));
@@ -99,23 +100,18 @@ public class EsDealServiceImpl implements EsDealService {
     queries.add(Query.of(q -> q.range(rangeBuilder.build())));
 
     return NestedQuery.of(n -> n
-            .path(facetGroup)
-            .scoreMode(ChildScoreMode.Avg)
-            .query(q -> q
-                    .bool(b -> b
-                            .must(queries)
-                    )
-            )
-    );
+        .path(facetGroup)
+        .scoreMode(ChildScoreMode.Avg)
+        .query(q -> q
+            .bool(b -> b
+                .must(queries))));
   }
 
   private co.elastic.clients.elasticsearch._types.SortOptions createCreatedAtSort(SortOrder sortOrder) {
     return co.elastic.clients.elasticsearch._types.SortOptions.of(s -> s
-            .field(f -> f
-                    .field("createdAt")
-                    .order(sortOrder)
-            )
-    );
+        .field(f -> f
+            .field("createdAt")
+            .order(sortOrder)));
   }
 
   private co.elastic.clients.elasticsearch._types.SortOptions createPriceSort(SortOrder sortOrder) {
@@ -123,20 +119,15 @@ public class EsDealServiceImpl implements EsDealService {
     String fieldName = "numberFacets.facetValue";
 
     return co.elastic.clients.elasticsearch._types.SortOptions.of(s -> s
-            .field(f -> f
-                    .field(fieldName)
-                    .order(sortOrder)
-                    .nested(n -> n
-                            .path(nestedPath)
-                            .filter(fi -> fi
-                                    .term(t -> t
-                                            .field(nestedPath + ".facetName")
-                                            .value("price")
-                                    )
-                            )
-                    )
-            )
-    );
+        .field(f -> f
+            .field(fieldName)
+            .order(sortOrder)
+            .nested(n -> n
+                .path(nestedPath)
+                .filter(fi -> fi
+                    .term(t -> t
+                        .field(nestedPath + ".facetName")
+                        .value("price"))))));
   }
 
   private List<Query> createCategoryFilters(List<String> categories) {
@@ -187,16 +178,14 @@ public class EsDealServiceImpl implements EsDealService {
 
   private MultiMatchQuery createMultiMatchQuery(String query) {
     return MultiMatchQuery.of(m -> m
-            .query(query)
-            .fields("title", "description")
-    );
+        .query(query)
+        .fields("title", "description"));
   }
 
   private TermQuery createTermQuery() {
     return TermQuery.of(t -> t
-            .field("status")
-            .value("ACTIVE")
-    );
+        .field("status")
+        .value("ACTIVE"));
   }
 
   private BoolQuery createBoolQuery(Boolean hideExpired, String query) {
@@ -215,8 +204,8 @@ public class EsDealServiceImpl implements EsDealService {
     BoolQuery.Builder boolQuery = new BoolQuery.Builder();
 
     if (searchParams.getCategories() == null
-            && searchParams.getPrices() == null
-            && searchParams.getStores() == null) {
+        && searchParams.getPrices() == null
+        && searchParams.getStores() == null) {
       return boolQuery.build();
     }
 
@@ -243,62 +232,78 @@ public class EsDealServiceImpl implements EsDealService {
 
   private Aggregation createAllFiltersSubAgg(String facetGroup) {
     return Aggregation.of(a -> a
-            .nested(n -> n.path(facetGroup))
-            .aggregations(new HashMap<String, Aggregation>() {{ // Explicitly create map for aggregations
-              put("names", Aggregation.of(namesAgg -> namesAgg
-                      .terms(t -> t.field(facetGroup + ".facetName"))
-                      .aggregations(new HashMap<String, Aggregation>() {{
-                        put("values", Aggregation.of(valuesAgg -> valuesAgg
-                                .terms(t -> t.field(facetGroup + ".facetValue"))));
-                      }})));
-            }}));
+        .nested(n -> n.path(facetGroup))
+        .aggregations(new HashMap<String, Aggregation>() {
+          { // Explicitly create map for aggregations
+            put("names", Aggregation.of(namesAgg -> namesAgg
+                .terms(t -> t.field(facetGroup + ".facetName"))
+                .aggregations(new HashMap<String, Aggregation>() {
+                  {
+                    put("values", Aggregation.of(valuesAgg -> valuesAgg
+                        .terms(t -> t.field(facetGroup + ".facetValue"))));
+                  }
+                })));
+          }
+        }));
   }
 
   private Aggregation createAllFiltersAgg(DealSearchParams searchParams) {
     return Aggregation.of(a -> a
-            .filter(f -> f.bool(createFilters(searchParams, null)))
-            .aggregations(new HashMap<String, Aggregation>() {{
-              put("stringFacets", createAllFiltersSubAgg("stringFacets"));
-              put("numberFacets", createAllFiltersSubAgg("numberFacets"));
-            }}));
+        .filter(f -> f.bool(createFilters(searchParams, null)))
+        .aggregations(new HashMap<String, Aggregation>() {
+          {
+            put("stringFacets", createAllFiltersSubAgg("stringFacets"));
+            put("numberFacets", createAllFiltersSubAgg("numberFacets"));
+          }
+        }));
   }
 
   private Aggregation createFilterAgg(String fieldName, String facetName) {
     return Aggregation.of(a -> a
-            .filter(f -> f.match(m -> m.field(fieldName).query(facetName))));
+        .filter(f -> f.match(m -> m.field(fieldName).query(facetName))));
   }
 
   private Aggregation createNestedSubAgg(String facetGroup, String facetName) {
     return Aggregation.of(a -> a
-            .nested(n -> n.path(facetGroup))
-            .aggregations(new HashMap<String, Aggregation>() {{
-              put("aggSpecial", Aggregation.of(specialAgg -> specialAgg
-                      .filter(f -> f.term(t -> t.field(facetGroup + ".facetName").value(facetName)))
-                      .aggregations(new HashMap<String, Aggregation>() {{
-                        put("names", Aggregation.of(namesAgg -> namesAgg
-                                .terms(t -> t.field(facetGroup + ".facetName"))
-                                .aggregations(new HashMap<String, Aggregation>() {{
-                                  put("values", Aggregation.of(valuesAgg -> valuesAgg
-                                          .terms(t -> t.field(facetGroup + ".facetValue"))));
-                                }})));
-                      }})));
-            }}));
+        .nested(n -> n.path(facetGroup))
+        .aggregations(new HashMap<String, Aggregation>() {
+          {
+            put("aggSpecial", Aggregation.of(specialAgg -> specialAgg
+                .filter(f -> f.term(t -> t.field(facetGroup + ".facetName").value(facetName)))
+                .aggregations(new HashMap<String, Aggregation>() {
+                  {
+                    put("names", Aggregation.of(namesAgg -> namesAgg
+                        .terms(t -> t.field(facetGroup + ".facetName"))
+                        .aggregations(new HashMap<String, Aggregation>() {
+                          {
+                            put("values", Aggregation.of(valuesAgg -> valuesAgg
+                                .terms(t -> t.field(facetGroup + ".facetValue"))));
+                          }
+                        })));
+                  }
+                })));
+          }
+        }));
   }
 
   private Aggregation createCategoryAgg(DealSearchParams searchParams) {
     return Aggregation.of(a -> a
-            .filter(f -> f.bool(createFilters(searchParams, "category")))
-            .aggregations(new HashMap<String, Aggregation>() {{
-              put("stringFacets", createNestedSubAgg("stringFacets", "category"));
-            }}));
+        .filter(f -> f.bool(createFilters(searchParams, "category")))
+        .aggregations(new HashMap<String, Aggregation>() {
+          {
+            put("stringFacets", createNestedSubAgg("stringFacets", "category"));
+          }
+        }));
   }
 
   private Aggregation createStoreAgg(DealSearchParams searchParams) {
     return Aggregation.of(a -> a
-            .filter(f -> f.bool(createFilters(searchParams, "store")))
-            .aggregations(new HashMap<String, Aggregation>() {{
-              put("stringFacets", createNestedSubAgg("stringFacets", "store"));
-            }}));
+        .filter(f -> f.bool(createFilters(searchParams, "store")))
+        .aggregations(new HashMap<String, Aggregation>() {
+          {
+            put("stringFacets", createNestedSubAgg("stringFacets", "store"));
+          }
+        }));
   }
 
   private Aggregation createPriceAgg(DealSearchParams searchParams) {
@@ -318,25 +323,33 @@ public class EsDealServiceImpl implements EsDealService {
     ranges.add(AggregationRange.of(r -> r.from(2000.0)));
 
     return Aggregation.of(a -> a
-            .filter(f -> f.bool(createFilters(searchParams, "price")))
-            .aggregations(new HashMap<String, Aggregation>() {{
-              put("numberFacets", Aggregation.of(numberFacetsAgg -> numberFacetsAgg
-                      .nested(n -> n.path("numberFacets"))
-                      .aggregations(new HashMap<String, Aggregation>() {{
-                        put("aggSpecial", Aggregation.of(specialAgg -> specialAgg
-                                .filter(f -> f.term(t -> t.field("numberFacets.facetName").value("price")))
-                                .aggregations(new HashMap<String, Aggregation>() {{
-                                  put("names", Aggregation.of(namesAgg -> namesAgg
-                                          .terms(t -> t.field("numberFacets.facetName"))
-                                          .aggregations(new HashMap<String, Aggregation>() {{
-                                            put("values", Aggregation.of(valuesAgg -> valuesAgg
-                                                    .range(r -> r
-                                                            .field("numberFacets.facetValue")
-                                                            .ranges(ranges))));
-                                          }})));
-                                }})));
-                      }})));
-            }}));
+        .filter(f -> f.bool(createFilters(searchParams, "price")))
+        .aggregations(new HashMap<String, Aggregation>() {
+          {
+            put("numberFacets", Aggregation.of(numberFacetsAgg -> numberFacetsAgg
+                .nested(n -> n.path("numberFacets"))
+                .aggregations(new HashMap<String, Aggregation>() {
+                  {
+                    put("aggSpecial", Aggregation.of(specialAgg -> specialAgg
+                        .filter(f -> f.term(t -> t.field("numberFacets.facetName").value("price")))
+                        .aggregations(new HashMap<String, Aggregation>() {
+                          {
+                            put("names", Aggregation.of(namesAgg -> namesAgg
+                                .terms(t -> t.field("numberFacets.facetName"))
+                                .aggregations(new HashMap<String, Aggregation>() {
+                                  {
+                                    put("values", Aggregation.of(valuesAgg -> valuesAgg
+                                        .range(r -> r
+                                            .field("numberFacets.facetValue")
+                                            .ranges(ranges))));
+                                  }
+                                })));
+                          }
+                        })));
+                  }
+                })));
+          }
+        }));
   }
 
   private List<Aggregation> createAggregations(DealSearchParams searchParams) {
@@ -353,9 +366,9 @@ public class EsDealServiceImpl implements EsDealService {
     try {
       // Build the search request using the new API
       SearchRequest.Builder requestBuilder = new SearchRequest.Builder()
-              .index(DEAL_INDEX)
-              .from(pageable.getPageNumber())
-              .size(pageable.getPageSize());
+          .index(DEAL_INDEX)
+          .from(pageable.getPageNumber())
+          .size(pageable.getPageSize());
 
       // Add sort if specified
       if (searchParams.getSortBy() != null) {
@@ -403,15 +416,26 @@ public class EsDealServiceImpl implements EsDealService {
       requestBuilder.postFilter(pf -> pf.bool(createFilters(searchParams, null)));
 
       SearchResponse<Object> response = esClient.search(requestBuilder.build(), Object.class);
-      return objectMapper.valueToTree(response);
+      return serializeResponseToJsonNode(response);
     } catch (IOException e) {
       throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
   }
 
-
   @Override
   public EsDeal save(EsDeal esDeal) {
     return repository.save(esDeal);
+  }
+
+  private JsonNode serializeResponseToJsonNode(SearchResponse<Object> response) {
+    StringWriter writer = new StringWriter();
+    try (JsonGenerator generator = esClient._transport().jsonpMapper().jsonProvider().createGenerator(writer)) {
+      response.serialize(generator, esClient._transport().jsonpMapper());
+    }
+    try {
+      return objectMapper.readTree(writer.toString());
+    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+      throw new RuntimeException("Error while serializing actual response", e);
+    }
   }
 }
