@@ -310,4 +310,13 @@ public class DealServiceImpl implements DealService {
   public Page<Deal> getDealsByStatus(DealStatus status, Pageable pageable) {
     return repository.findAllByStatusEqualsOrderByCreatedAtDesc(status, pageable);
   }
+
+  @Override
+  public void syncElasticsearch() {
+    esDealRepository.deleteAll();
+    List<EsDeal> esDeals = repository.findAll().stream()
+        .map(EsDeal::new)
+        .toList();
+    esDealRepository.saveAll(esDeals);
+  }
 }

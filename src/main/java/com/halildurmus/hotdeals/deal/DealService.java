@@ -42,4 +42,7 @@ public interface DealService {
 
   Page<Deal> getDealsByStatus(DealStatus status, Pageable pageable);
 
+  @IsSuper
+  void syncElasticsearch();
+
 }
