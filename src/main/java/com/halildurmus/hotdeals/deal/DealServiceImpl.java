@@ -48,17 +48,24 @@ public class DealServiceImpl implements DealService {
 
   private final ObjectMapper objectMapper = JsonMapper.builder().findAndAddModules().build();
 
-  @Autowired private CommentService commentService;
+  @Autowired
+  private CommentService commentService;
 
-  @Autowired private CategoryRepository categoryRepository;
-  @Autowired private DealRepository repository;
+  @Autowired
+  private CategoryRepository categoryRepository;
+  @Autowired
+  private DealRepository repository;
 
-  @Autowired private EsDealRepository esDealRepository;
+  @Autowired
+  private EsDealRepository esDealRepository;
 
-  @Autowired private MongoTemplate mongoTemplate;
+  @Autowired
+  private MongoTemplate mongoTemplate;
 
-  @Autowired private SecurityService securityService;
-  @Autowired private RoleService roleService;
+  @Autowired
+  private SecurityService securityService;
+  @Autowired
+  private RoleService roleService;
 
   @Override
   public Page<Deal> findAll(Pageable pageable) {
@@ -112,7 +119,7 @@ public class DealServiceImpl implements DealService {
   @Override
   public Deal create(Deal deal) {
 
-    if(deal.getTags() != null && !deal.getTags().isEmpty()) {
+    if (deal.getTags() != null && !deal.getTags().isEmpty()) {
       deal.setTags(validatedTags(deal.getTags()));
     }
     var savedDeal = repository.save(deal);
@@ -126,40 +133,38 @@ public class DealServiceImpl implements DealService {
     return savedDeal;
   }
 
-  List<String> validatedTags(List<String> tags){
+  List<String> validatedTags(List<String> tags) {
     List<String> validatedTags = new ArrayList<>();
 
     for (String tagPath : tags) {
       // Check if tag exists, create if it doesn't
       categoryRepository.findByCategoryAndIsTag(tagPath, true)
-              .orElseGet(() -> {
-                // Create a new tag
-                Category tag = new Category();
-                tag.setCategory(tagPath);
-                tag.setIsTag(true);
+          .orElseGet(() -> {
+            // Create a new tag
+            Category tag = new Category();
+            tag.setCategory(tagPath);
+            tag.setIsTag(true);
 
-                // Set a default name using the tag path
-                Map<String, String> names = new HashMap<>();
-                String tagName = tagPath.startsWith("/") ? tagPath.substring(1) : tagPath;
-                names.put("en", tagName);
-                tag.setNames(names);
+            // Set a default name using the tag path
+            Map<String, String> names = new HashMap<>();
+            String tagName = tagPath.startsWith("/") ? tagPath.substring(1) : tagPath;
+            names.put("en", tagName);
+            tag.setNames(names);
 
-                return categoryRepository.save(tag);
-              });
+            return categoryRepository.save(tag);
+          });
       validatedTags.add(tagPath);
     }
 
     return validatedTags;
   }
 
-
-
   @Override
   public Deal patch(String id, DealPatchDTO dealPatchDTO) {
     var deal = repository.findById(id).orElseThrow(DealNotFoundException::new);
     var user = securityService.getUser();
 
-    if (!dealPatchDTO.getIsAdminOrMod()  && !user.getId().equals(deal.getPostedBy().toString())) {
+    if (!dealPatchDTO.getIsAdminOrMod() && !user.getId().equals(deal.getPostedBy().toString())) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
     }
 
@@ -177,19 +182,19 @@ public class DealServiceImpl implements DealService {
   public Deal update(Deal deal) {
     var user = securityService.getUser();
     Deal existingDeal = repository.findById(deal.getId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deal not found"));
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deal not found"));
 
     // Get user's roles from Firebase using RoleService
-      RoleServiceImpl.UserWithRoles userWithRoles = null;
-      try {
-          userWithRoles = roleService.viewAllRolesUser(user.getUid());
-      } catch (FirebaseAuthException e) {
-          throw new RuntimeException(e);
-      }
+    RoleServiceImpl.UserWithRoles userWithRoles = null;
+    try {
+      userWithRoles = roleService.viewAllRolesUser(user.getUid());
+    } catch (FirebaseAuthException e) {
+      throw new RuntimeException(e);
+    }
 
     boolean isAdminOrMod = userWithRoles.getRoles().contains(Role.ROLE_ADMIN) ||
-            userWithRoles.getRoles().contains(Role.ROLE_MODERATOR)
-            || userWithRoles.getRoles().contains(Role.ROLE_SUPER);
+        userWithRoles.getRoles().contains(Role.ROLE_MODERATOR)
+        || userWithRoles.getRoles().contains(Role.ROLE_SUPER);
 
     // Check if user is owner OR has admin/mod role
     boolean isOwner = user.getId().equals(existingDeal.getPostedBy().toString());
@@ -197,8 +202,7 @@ public class DealServiceImpl implements DealService {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only update your own deal!");
     }
 
-
-    if(deal.getTags() != null && !deal.getTags().isEmpty() &&  !deal.getTags().equals(existingDeal.getTags())) {
+    if (deal.getTags() != null && !deal.getTags().isEmpty() && !deal.getTags().equals(existingDeal.getTags())) {
       deal.setTags(validatedTags(deal.getTags()));
     }
 
@@ -217,9 +221,22 @@ public class DealServiceImpl implements DealService {
   public void delete(String id) {
     var deal = repository.findById(id).orElseThrow(DealNotFoundException::new);
     var user = securityService.getUser();
-    if (!user.getId().equals(deal.getPostedBy().toString())) {
+
+    // Get user's roles from Firebase using RoleService
+    RoleServiceImpl.UserWithRoles userWithRoles = null;
+    try {
+      userWithRoles = roleService.viewAllRolesUser(user.getUid());
+    } catch (FirebaseAuthException e) {
+      throw new RuntimeException(e);
+    }
+
+    boolean isSuper = userWithRoles.getRoles().contains(Role.ROLE_SUPER);
+    boolean isOwner = user.getId().equals(deal.getPostedBy().toString());
+
+    if (!isOwner && !isSuper) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only remove your own deal!");
     }
+
     commentService.deleteDealComments(id);
     repository.deleteById(id);
     esDealRepository.deleteById(id);
