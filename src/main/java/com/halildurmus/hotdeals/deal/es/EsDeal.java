@@ -28,10 +28,10 @@ public class EsDeal {
   @Field(type = FieldType.Keyword)
   private String postedBy;
 
-  @Field(type = FieldType.Search_As_You_Type, analyzer = "folding_analyzer", searchAnalyzer = "folding_analyzer")
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "folding_analyzer", searchAnalyzer = "folding_search_analyzer")
   private String title;
 
-  @Field(type = FieldType.Text, analyzer = "folding_analyzer", searchAnalyzer = "folding_analyzer")
+  @Field(type = FieldType.Text, analyzer = "folding_analyzer", searchAnalyzer = "folding_search_analyzer")
   private String description;
 
   @Field(type = FieldType.Keyword)
