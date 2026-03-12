@@ -12,8 +12,10 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.Setting;
 
 @Document(indexName = "deal")
+@Setting(settingPath = "es-settings.json")
 @TypeAlias("esDeal")
 @Data
 @NoArgsConstructor
@@ -26,10 +28,10 @@ public class EsDeal {
   @Field(type = FieldType.Keyword)
   private String postedBy;
 
-  @Field(type = FieldType.Search_As_You_Type)
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "folding_analyzer", searchAnalyzer = "folding_analyzer")
   private String title;
 
-  @Field(type = FieldType.Text)
+  @Field(type = FieldType.Text, analyzer = "folding_analyzer", searchAnalyzer = "folding_analyzer")
   private String description;
 
   @Field(type = FieldType.Keyword)
