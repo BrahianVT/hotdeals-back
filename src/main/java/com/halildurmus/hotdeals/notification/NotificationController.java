@@ -1,8 +1,8 @@
 package com.halildurmus.hotdeals.notification;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.halildurmus.hotdeals.notification.dto.RoleNotificationRequest;
-import com.halildurmus.hotdeals.security.role.IsSuper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/notifications")
+@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'MODERATOR')")
 @Validated
 public class NotificationController {
 
@@ -60,7 +61,6 @@ public class NotificationController {
 
   @PostMapping("/send-to-role")
   @ResponseStatus(HttpStatus.CREATED)
-  @IsSuper
   @Operation(summary = "Sends a push notification to all users with a specific role")
   @ApiResponses({
           @ApiResponse(
