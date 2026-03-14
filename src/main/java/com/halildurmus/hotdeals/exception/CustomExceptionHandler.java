@@ -298,4 +298,17 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
       return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
   }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<AppError> handleAllUncaughtException(Exception e, WebRequest request) {
+    var error =
+        new AppError(
+            currentApiVersion,
+            Integer.toString(HttpStatus.INTERNAL_SERVER_ERROR.value()),
+            "An unexpected error occurred",
+            "internal-error",
+            "",
+            e.getMessage() != null ? e.getMessage() : "Unknown error");
+    return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
 }

@@ -95,7 +95,8 @@ public class FirebaseFilter extends OncePerRequestFilter {
 
     var user = firebaseTokenToUser(decodedToken);
     log.info("User: " + user);
-    List<GrantedAuthority> authorities = parseAuthorities(decodedToken, user.getEmail());
+    String email = user != null ? user.getEmail() : null;
+    List<GrantedAuthority> authorities = parseAuthorities(decodedToken, email);
     var authentication =
         new FirebaseAuthenticationToken(user, new Credentials(decodedToken, token), authorities);
     SecurityContextHolder.getContext().setAuthentication(authentication);

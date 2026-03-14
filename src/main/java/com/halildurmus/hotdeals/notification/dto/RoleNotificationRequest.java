@@ -17,8 +17,6 @@ public class RoleNotificationRequest {
     @NotNull
     @Schema(description = "Role to send notification to", example = "ROLE_MODERATOR")
     private Role role;
-
-
     @Schema(description = "Notification content (tokens will be auto-populated)")
     private Notification notification;
 }
