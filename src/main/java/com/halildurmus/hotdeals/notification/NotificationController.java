@@ -26,25 +26,19 @@ import org.springframework.web.server.ResponseStatusException;
 @SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/notifications")
-@PreAuthorize("hasAnyRole('ADMIN', 'SUPER', 'MODERATOR')")
 @Validated
 public class NotificationController {
 
-  @Autowired private NotificationService notificationService;
+  @Autowired
+  private NotificationService notificationService;
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  @Operation(
-      summary = "Sends a push notification using FCM",
-      description =
-          "<b>*</b>(<b>title</b> or <b>titleLocKey</b>) and (<b>body</b> or <b>bodyLocKey</b>) parameters are required")
+  @Operation(summary = "Sends a push notification using FCM", description = "<b>*</b>(<b>title</b> or <b>titleLocKey</b>) and (<b>body</b> or <b>bodyLocKey</b>) parameters are required")
   @ApiResponses({
-    @ApiResponse(
-        responseCode = "201",
-        description = "Push notification sent",
-        content = @Content(schema = @Schema(type = "integer", defaultValue = "1"))),
-    @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+      @ApiResponse(responseCode = "201", description = "Push notification sent", content = @Content(schema = @Schema(type = "integer", defaultValue = "1"))),
+      @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
   })
   public Integer sendNotification(@Valid @RequestBody Notification notification) {
     if (ObjectUtils.isEmpty(notification.getTitle())
@@ -63,16 +57,13 @@ public class NotificationController {
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(summary = "Sends a push notification to all users with a specific role")
   @ApiResponses({
-          @ApiResponse(
-                  responseCode = "201",
-                  description = "Push notification sent",
-                  content = @Content(schema = @Schema(type = "integer", defaultValue = "5"))),
-          @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
-          @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-          @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
+      @ApiResponse(responseCode = "201", description = "Push notification sent", content = @Content(schema = @Schema(type = "integer", defaultValue = "5"))),
+      @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+      @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
   })
   public Integer sendNotificationToRole(@Valid @RequestBody RoleNotificationRequest request)
-          throws FirebaseAuthException {
+      throws FirebaseAuthException {
     return notificationService.sendToRole(request.getRole(), request.getNotification());
   }
 }
