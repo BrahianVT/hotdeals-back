@@ -67,5 +67,8 @@ public class EsDeal {
     var storeFacet = new StringFacet("store", deal.getStore().toString());
     this.stringFacets.add(categoryFacet);
     this.stringFacets.add(storeFacet);
+    if (deal.getType() != null) {
+      this.stringFacets.add(new StringFacet("type", deal.getType()));
+    }
   }
 }

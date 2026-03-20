@@ -26,6 +26,9 @@ public class DealPostDTO {
   @NotBlank
   private final String category;
 
+  @Schema(description = "Deal type", example = "MAYOREO")
+  private final String type;
+
   @Schema(
       description = "Deal title",
       example = "HP 24mh FHD Monitor with 23.8-Inch IPS Display (1080p)")

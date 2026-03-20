@@ -66,6 +66,9 @@ public class Deal extends DateAudit {
   @NotBlank
   private String category;
 
+  @Schema(description = "Deal type", example = "MAYOREO")
+  private String type;
+
   @Schema(description = "Deal tags", example = "[\"discount\", \"electronics\", \"sale\"]")
   @Default
   private List<String> tags = new ArrayList<>();
