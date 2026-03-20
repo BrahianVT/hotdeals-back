@@ -70,5 +70,8 @@ public class EsDeal {
     if (deal.getType() != null) {
       this.stringFacets.add(new StringFacet("type", deal.getType()));
     }
+    if (deal.getLocation() != null) {
+      this.stringFacets.add(new StringFacet("location", deal.getLocation()));
+    }
   }
 }
