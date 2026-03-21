@@ -193,6 +193,23 @@ public class EsDealServiceImpl implements EsDealService {
     return queries;
   }
 
+  private List<Query> createLocationFilters(List<String> locations) {
+    List<Query> queries = new ArrayList<>();
+
+    if (locations.size() > 1) {
+      List<Query> shouldQueries = new ArrayList<>();
+      for (String location : locations) {
+        shouldQueries.add(Query.of(q -> q.nested(createStringFacetFilter("location", location))));
+      }
+
+      queries.add(Query.of(q -> q.bool(b -> b.should(shouldQueries))));
+    } else {
+      queries.add(Query.of(q -> q.nested(createStringFacetFilter("location", locations.get(0)))));
+    }
+
+    return queries;
+  }
+
   private MultiMatchQuery createMultiMatchQuery(String query) {
     return MultiMatchQuery.of(m -> m
         .query(query)
@@ -223,7 +240,8 @@ public class EsDealServiceImpl implements EsDealService {
     if (searchParams.getCategories() == null
         && searchParams.getPrices() == null
         && searchParams.getStores() == null
-        && searchParams.getTypes() == null) {
+        && searchParams.getTypes() == null
+        && searchParams.getLocations() == null) {
       return boolQuery.build();
     }
 
@@ -243,6 +261,10 @@ public class EsDealServiceImpl implements EsDealService {
 
     if (searchParams.getTypes() != null && !Objects.equals(filterToBeExcluded, "type")) {
       filters.addAll(createTypeFilters(searchParams.getTypes()));
+    }
+
+    if (searchParams.getLocations() != null && !Objects.equals(filterToBeExcluded, "location")) {
+      filters.addAll(createLocationFilters(searchParams.getLocations()));
     }
 
     for (Query filter : filters) {
@@ -338,6 +360,16 @@ public class EsDealServiceImpl implements EsDealService {
         }));
   }
 
+  private Aggregation createLocationAgg(DealSearchParams searchParams) {
+    return Aggregation.of(a -> a
+        .filter(f -> f.bool(createFilters(searchParams, "location")))
+        .aggregations(new HashMap<String, Aggregation>() {
+          {
+            put("stringFacets", createNestedSubAgg("stringFacets", "location"));
+          }
+        }));
+  }
+
   private Aggregation createPriceAgg(DealSearchParams searchParams) {
     // Create the ranges using AggregationRange
     List<AggregationRange> ranges = new ArrayList<>();
@@ -391,6 +423,7 @@ public class EsDealServiceImpl implements EsDealService {
     aggregations.add(createPriceAgg(searchParams));
     aggregations.add(createStoreAgg(searchParams));
     aggregations.add(createTypeAgg(searchParams));
+    aggregations.add(createLocationAgg(searchParams));
     return aggregations;
   }
 
@@ -439,6 +472,9 @@ public class EsDealServiceImpl implements EsDealService {
             break;
           case 4:
             name = "aggType";
+            break;
+          case 5:
+            name = "aggLocation";
             break;
           default:
             name = "agg" + i;
