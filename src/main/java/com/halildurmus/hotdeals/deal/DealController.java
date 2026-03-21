@@ -212,6 +212,7 @@ public class DealController {
   public JsonNode searchDeals(
       @Parameter(description = "Search query", example = "iphone") @RequestParam(value = "query") String query,
       @Parameter(description = "Category paths", example = "/computers, /electronics") @RequestParam(value = "categories", required = false) List<String> categories,
+      @Parameter(description = "Deal types", example = "MAYOREO, MENUDEO, MAYOREO_MENUDEO") @RequestParam(value = "types", required = false) List<String> types,
       @Parameter(description = "Price ranges formatted as <b>&lt;from&gt;:&lt;to&gt;</b><br /><b>&lt;to&gt;</b> value may also receive an <b>asterisk(*)</b> symbol meaning there is <b>no upper limit</b> in the given price range.", examples = {
           @ExampleObject(name = "20:50", description = "Lists deals between $20 and $50"),
           @ExampleObject(name = "1500:*", description = "Lists deals with a price of at least $1500")
@@ -243,6 +244,7 @@ public class DealController {
     var searchParams = DealSearchParams.builder()
         .query(query)
         .categories(categories)
+        .types(types)
         .prices(priceRanges)
         .stores(stores)
         .hideExpired(hideExpired)

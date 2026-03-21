@@ -176,6 +176,23 @@ public class EsDealServiceImpl implements EsDealService {
     return queries;
   }
 
+  private List<Query> createTypeFilters(List<String> types) {
+    List<Query> queries = new ArrayList<>();
+
+    if (types.size() > 1) {
+      List<Query> shouldQueries = new ArrayList<>();
+      for (String type : types) {
+        shouldQueries.add(Query.of(q -> q.nested(createStringFacetFilter("type", type))));
+      }
+
+      queries.add(Query.of(q -> q.bool(b -> b.should(shouldQueries))));
+    } else {
+      queries.add(Query.of(q -> q.nested(createStringFacetFilter("type", types.get(0)))));
+    }
+
+    return queries;
+  }
+
   private MultiMatchQuery createMultiMatchQuery(String query) {
     return MultiMatchQuery.of(m -> m
         .query(query)
@@ -205,7 +222,8 @@ public class EsDealServiceImpl implements EsDealService {
 
     if (searchParams.getCategories() == null
         && searchParams.getPrices() == null
-        && searchParams.getStores() == null) {
+        && searchParams.getStores() == null
+        && searchParams.getTypes() == null) {
       return boolQuery.build();
     }
 
@@ -221,6 +239,10 @@ public class EsDealServiceImpl implements EsDealService {
 
     if (searchParams.getStores() != null && !Objects.equals(filterToBeExcluded, "store")) {
       filters.addAll(createStoreFilters(searchParams.getStores()));
+    }
+
+    if (searchParams.getTypes() != null && !Objects.equals(filterToBeExcluded, "type")) {
+      filters.addAll(createTypeFilters(searchParams.getTypes()));
     }
 
     for (Query filter : filters) {
@@ -306,6 +328,16 @@ public class EsDealServiceImpl implements EsDealService {
         }));
   }
 
+  private Aggregation createTypeAgg(DealSearchParams searchParams) {
+    return Aggregation.of(a -> a
+        .filter(f -> f.bool(createFilters(searchParams, "type")))
+        .aggregations(new HashMap<String, Aggregation>() {
+          {
+            put("stringFacets", createNestedSubAgg("stringFacets", "type"));
+          }
+        }));
+  }
+
   private Aggregation createPriceAgg(DealSearchParams searchParams) {
     // Create the ranges using AggregationRange
     List<AggregationRange> ranges = new ArrayList<>();
@@ -358,6 +390,7 @@ public class EsDealServiceImpl implements EsDealService {
     aggregations.add(createCategoryAgg(searchParams));
     aggregations.add(createPriceAgg(searchParams));
     aggregations.add(createStoreAgg(searchParams));
+    aggregations.add(createTypeAgg(searchParams));
     return aggregations;
   }
 
@@ -403,6 +436,9 @@ public class EsDealServiceImpl implements EsDealService {
             break;
           case 3:
             name = "aggStore";
+            break;
+          case 4:
+            name = "aggType";
             break;
           default:
             name = "agg" + i;

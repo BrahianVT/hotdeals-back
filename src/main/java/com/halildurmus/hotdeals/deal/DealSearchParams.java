@@ -12,6 +12,8 @@ public class DealSearchParams {
 
   private List<String> categories;
 
+  private List<String> types;
+
   private List<PriceRange> prices;
 
   private List<String> stores;
