@@ -117,4 +117,8 @@ public class Deal extends DateAudit {
 
   @Schema(description = "location, is the hallway ", example = "I-3")
   private String location;
+
+  @Schema(description = "Building ID", example = "BLD-123")
+  @Size(max = 10)
+  private String buildingId;
 }

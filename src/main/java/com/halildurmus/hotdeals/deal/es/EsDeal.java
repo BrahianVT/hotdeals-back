@@ -46,6 +46,9 @@ public class EsDeal {
   @Field(type = FieldType.Date)
   private Instant createdAt;
 
+  @Field(type = FieldType.Keyword)
+  private String buildingId;
+
   @Field(type = FieldType.Nested)
   private List<NumberFacet> numberFacets = new ArrayList<>();
 
@@ -72,6 +75,10 @@ public class EsDeal {
     }
     if (deal.getLocation() != null) {
       this.stringFacets.add(new StringFacet("location", deal.getLocation()));
+    }
+    this.buildingId = deal.getBuildingId();
+    if (deal.getBuildingId() != null) {
+      this.stringFacets.add(new StringFacet("buildingId", deal.getBuildingId()));
     }
   }
 }

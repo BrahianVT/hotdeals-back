@@ -71,4 +71,8 @@ public class DealPostDTO {
 
   @Schema(description = "Deal status", example = "ACTIVE")
   private final DealStatus status;
+
+  @Schema(description = "Building ID", example = "BLD-123")
+  @Size(max = 10)
+  private final String buildingId;
 }

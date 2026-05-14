@@ -100,8 +100,8 @@ db.categories.insertMany([
 
 
 db.users.insertOne({
-  "uid": "b91zCBlN7yNDph7mT9XRiPAaWGd2",  // The UID from your Firebase token
-  "email": "pumasemj@hotmail.com",
+  "uid": "2so4KBTpwTcN3QOzedE3mI6bCPD2",  // The UID from your Firebase token
+  "email": "pumasemj@gmail.com",
   "nickname": "admin",
   "avatar": "https://www.gravatar.com/avatar",
   "createdAt": new Date(),
@@ -131,7 +131,7 @@ db.users.insertOne({
 var ceda = db.stores.findOne({name: 'CEDA'})
 
 
-var admin = db.users.findOne({ email: "pumasemj@hotmail.com" });
+var admin = db.users.findOne({ email: "pumasemj@gmail.com" });
 var user = db.users.findOne({email: "bvelazquez5605@gmail.com"});
 var mod = db.users.findOne({email: "pumasbra@hotmail.com"});
 

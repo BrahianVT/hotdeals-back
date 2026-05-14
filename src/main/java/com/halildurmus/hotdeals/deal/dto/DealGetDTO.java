@@ -86,5 +86,8 @@ public class DealGetDTO {
   @Schema(description = "location, is the hallway ", example = "I-3")
   private final String location;
 
+  @Schema(description = "Building ID", example = "BLD-123")
+  private final String buildingId;
+
   private boolean isAdminOrMod;
 }
