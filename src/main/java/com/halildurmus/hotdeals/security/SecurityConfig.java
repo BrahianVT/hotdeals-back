@@ -34,7 +34,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private static final String[] PUBLIC_GET_ENDPOINTS = {
-          "/actuator/health", "/categories", "/deals/**", "/error", "/stores", "/categories/tags"
+          "/actuator/health", "/categories", "/deals/**", "/error", "/stores", "/categories/tags", "/api/v1/legal/**"
   };
 
   // Matches /users/{id}, /users/{id}/comment-count, /users/{id}/extended
