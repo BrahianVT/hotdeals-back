@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -25,8 +26,13 @@ public class BuildingController {
   private BuildingService service;
 
   @GetMapping("/map-data")
-  @Operation(summary = "Returns all registered buildings and their associated deal IDs")
-  public List<BuildingMapDTO> getBuildingsMapData() {
+  @Operation(summary = "Returns buildings and their associated deal IDs, optionally filtered by mapId and floorLevel")
+  public List<BuildingMapDTO> getBuildingsMapData(
+      @RequestParam(required = false) String mapId,
+      @RequestParam(required = false) Integer floorLevel) {
+    if (mapId != null && floorLevel != null) {
+      return service.getBuildingsWithDealIds(mapId, floorLevel);
+    }
     return service.getBuildingsWithDealIds();
   }
 

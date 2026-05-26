@@ -7,6 +7,8 @@ import java.util.List;
 public class BuildingMapDTO {
     private String id;
     private String buildingId;
+    private String mapId;
+    private Integer floorLevel;
     private String type;
     private String address_string;
     private List<String> dealIds;

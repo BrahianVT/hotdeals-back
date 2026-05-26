@@ -15,6 +15,10 @@ public class BuildingService {
     return repository.findAllBuildingsWithDealIds();
   }
 
+  public List<BuildingMapDTO> getBuildingsWithDealIds(String mapId, Integer floorLevel) {
+    return repository.findBuildingsWithDealIdsByMapIdAndFloorLevel(mapId, floorLevel);
+  }
+
   public Building saveBuilding(Building building) {
     return repository.save(building);
   }
