@@ -38,7 +38,7 @@ public class BuildingController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  @Operation(summary = "Registers a new building")
+  @Operation(summary = "Registers a new building or updates an existing one")
   public Building createBuilding(@Valid @RequestBody Building building) {
     return service.saveBuilding(building);
   }

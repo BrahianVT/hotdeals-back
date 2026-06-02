@@ -2,6 +2,7 @@ package com.halildurmus.hotdeals.building;
 
 import com.halildurmus.hotdeals.building.dto.BuildingMapDTO;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,8 @@ public class BuildingService {
   }
 
   public Building saveBuilding(Building building) {
+    Optional<Building> existingBuilding = repository.findByBuildingId(building.getBuildingId());
+    existingBuilding.ifPresent(existing -> building.setId(existing.getId()));
     return repository.save(building);
   }
 }
