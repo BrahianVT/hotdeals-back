@@ -25,7 +25,7 @@ public class Building {
   @Schema(description = "Building ID", example = "018f3a2b")
   @Indexed(unique = true)
   @NotBlank
-  @Size(max = 10)
+  @Size(max = 40)
   private String buildingId;
 
   @Schema(description = "Map ID", example = "frutas-verduras")
