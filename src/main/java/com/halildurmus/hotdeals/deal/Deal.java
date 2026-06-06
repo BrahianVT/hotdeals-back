@@ -119,6 +119,6 @@ public class Deal extends DateAudit {
   private String location;
 
   @Schema(description = "Building ID", example = "BLD-123")
-  @Size(max = 10)
+  @Size(max = 40)
   private String buildingId;
 }
