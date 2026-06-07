@@ -4,7 +4,9 @@ import com.halildurmus.hotdeals.building.dto.BuildingMapDTO;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class BuildingService {
@@ -24,5 +26,23 @@ public class BuildingService {
     Optional<Building> existingBuilding = repository.findByBuildingId(building.getBuildingId());
     existingBuilding.ifPresent(existing -> building.setId(existing.getId()));
     return repository.save(building);
+  }
+
+  public Building getBuilding(String id) {
+    return repository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Building not found"));
+  }
+
+  public Building updateBuilding(String id, Building building) {
+    Building existingBuilding = repository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Building not found"));
+    building.setId(existingBuilding.getId());
+    return repository.save(building);
+  }
+
+  public void deleteBuilding(String id) {
+    Building existingBuilding = repository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Building not found"));
+    repository.delete(existingBuilding);
   }
 }
