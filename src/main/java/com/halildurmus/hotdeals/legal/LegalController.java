@@ -109,4 +109,70 @@ public class LegalController {
                 </html>
                 """;
     }
+
+    @GetMapping(value = "/eula", produces = "text/html")
+    public String getEulaHtml() {
+        return """
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Contrato de Licencia de Usuario Final (EULA) - Promoabastos</title>
+                </head>
+                <body>
+                    <h1>CONTRATO DE LICENCIA DE USUARIO FINAL (EULA)</h1>
+                    <p><em>Última actualización: 08-02-2026</em></p>
+                    <p>El presente Contrato de Licencia de Usuario Final ("Contrato") es un acuerdo legal entre usted ("Usuario") y Promoabastos ("Licenciante", "nosotros" o "nuestro") para el uso de la aplicación móvil promoabastos ("Aplicación").</p>
+                    <p>Al descargar, instalar o usar la Aplicación desde la Google Play Store, usted acepta los términos de este Contrato. Si no está de acuerdo, no descargue, instale ni use la Aplicación.</p>
+
+                    <h2>1. CONCESIÓN DE LA LICENCIA</h2>
+                    <p>Le otorgamos una licencia revocable, no exclusiva, no transferible y limitada para descargar, instalar y usar la Aplicación en dispositivos móviles de su propiedad, estrictamente de acuerdo con este Contrato y las condiciones de Google Play Store.</p>
+
+                    <h2>2. CUENTAS DE USUARIO Y REGISTRO</h2>
+                    <ul>
+                        <li><strong>Registro:</strong> Para acceder a ciertas funciones, deberá crear una cuenta proporcionando datos personales exactos y actualizados.</li>
+                        <li><strong>Seguridad:</strong> Usted es el único responsable de mantener la confidencialidad de sus credenciales de acceso.</li>
+                        <li><strong>Uso no autorizado:</strong> Se compromete a notificarnos de inmediato cualquier uso no autorizado de su cuenta. No seremos responsables por pérdidas causadas por accesos no autorizados.</li>
+                    </ul>
+
+                    <h2>3. DATOS PERSONALES Y PRIVACIDAD</h2>
+                    <ul>
+                        <li><strong>Recopilación:</strong> Al registrarse y usar la Aplicación, usted reconoce que recopilamos datos personales (como nombre, correo electrónico y métricas de uso).</li>
+                        <li><strong>Aviso de Privacidad:</strong> El tratamiento de sus datos personales se rige estrictamente por nuestro Aviso de Privacidad, disponible en <a href="/api/v1/legal/privacy-policy">Aviso de Privacidad</a>, de conformidad con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) en México.</li>
+                    </ul>
+
+                    <h2>4. COMPRAS INTEGRADAS Y SUSCRIPCIONES FUTURAS</h2>
+                    <ul>
+                        <li><strong>Funciones de Pago:</strong> La Aplicación puede ofrecer en el futuro funciones de pago, compras integradas o suscripciones ("Compras").</li>
+                        <li><strong>Términos de Compra:</strong> Al implementar dichas funciones, los precios, métodos de pago y condiciones de facturación se mostrarán claramente antes de la compra y se procesarán de forma segura a través de la pasarela de pagos de Google Play Store.</li>
+                        <li><strong>Modificaciones:</strong> Nos reservamos el derecho de modificar las tarifas del servicio futuro mediante un aviso previo dentro de la Aplicación.</li>
+                    </ul>
+
+                    <h2>5. RESTRICCIONES DE LA LICENCIA</h2>
+                    <p>Usted acepta que NO realizará, ni permitirá que terceros realicen lo siguiente:</p>
+                    <ul>
+                        <li>Licenciar, vender, rentar, arrendar, asignar o distribuir la Aplicación.</li>
+                        <li>Modificar, realizar obras derivadas, desensamblar, descompilar o realizar ingeniería inversa de cualquier parte de la Aplicación.</li>
+                        <li>Utilizar la Aplicación para fines ilícitos o fraudulentos en territorio mexicano o internacional.</li>
+                    </ul>
+
+                    <h2>6. PROPIEDAD INTELECTUAL</h2>
+                    <p>La Aplicación, incluyendo su código fuente, bases de datos, diseños, textos, gráficos y logotipos, son propiedad exclusiva de promoabastos y están protegidos por la Ley Federal del Derecho de Autor y la Ley Federal de Protección a la Propiedad Industrial en México.</p>
+
+                    <h2>7. LIMITACIÓN DE RESPONSABILIDAD</h2>
+                    <p>En la medida máxima permitida por las leyes mexicanas aplicables (incluyendo la Ley Federal de Protección al Consumidor), el Licenciante no será responsable por daños indirectos, incidentales o consecuentes (como pérdida de datos o fallas en el dispositivo) que deriven del uso o la imposibilidad de usar la Aplicación. La Aplicación se proporciona "TAL CUAL" ("AS IS").</p>
+
+                    <h2>8. LEY APLICABLE Y JURISDICCIÓN</h2>
+                    <p>Este Contrato se regirá e interpretará de conformidad con las leyes de los Estados Unidos Mexicanos. Para cualquier controversia, las partes se someten expresamente a la jurisdicción de los tribunales competentes de la Ciudad de México, renunciando a cualquier otro fuero que pudiera corresponderles por su domicilio presente o futuro.</p>
+
+                    <h2>9. DATOS DE CONTACTO</h2>
+                    <p>Para cualquier duda, aclaración o soporte técnico relacionado con la Aplicación, puede contactarnos en:</p>
+                    <ul>
+                        <li>Correo electrónico: soporte@promoabastos.com</li>
+                        <li>Sitio web: promoabastos.com</li>
+                    </ul>
+                </body>
+                </html>
+                """;
+    }
 }
