@@ -1,0 +1,65 @@
+api-version: "1.0"
+server:
+  port: ${HTTPS_PORT}
+  ssl:
+    enabled: true
+    key-store: ${KEYSTORE_PATH}
+    key-store-password: ${KEYSTORE_PASSWORD
+    key-store-type: PKCS12
+    key-alias: ${KEYSTORE_ALIAS}
+    protocol: TLS
+    enabled-protocols: TLSv1.2,TLSv1.3
+
+spring:
+  threads:
+    virtual:
+      enabled: true  # Corregido: cambiado '=' por ':' para sintaxis válida YAML
+  main:
+    web-application-type: servlet
+  task:
+    execution:
+      virtual-threads: true
+    cache:
+      redis:
+        enabled: false
+        cache-null-values: false
+        time-to-live: PT10M
+  data:
+    mongodb:
+      auto-index-creation: true
+      database: db
+      uri: mongodb://127.0.0.1:27018
+    rest:
+      detection-strategy: annotated
+    elasticsearch:
+      rest:
+        uris: http://127.0.0.1:9200
+    redis:
+      host: 127.0.0.1
+      port: 6379
+
+security:
+  enabled: true
+  allowed-methods:
+    - OPTIONS
+    - GET
+    - PATCH
+    - POST
+    - PUT
+    - DELETE
+  super-admins:
+    - pumasemj@gmail.com
+    - pumasemj@hotmail.com
+
+springdoc:
+  packages-to-scan: com.halildurmus.hotdeals
+  swagger-ui:
+    layout: BaseLayout
+    operationsSorter: method
+    path: /swagger-ui
+    tags-sorter: alpha
+
+swagger:
+  description: "hotdeals REST API Documentation"
+  title: "hotdeals API"
+  version: "1.0.0"
