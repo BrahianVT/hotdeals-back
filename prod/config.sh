@@ -9,8 +9,8 @@ APP_NAME="hotdeals"
 APP_VERSION="0.0.1-SNAPSHOT"
 APP_DIR="/home/ubuntu/hotdeals-back"
 JAR_FILE="target/${APP_NAME}-${APP_VERSION}.jar"
-LOG_FILE="/var/log/${APP_NAME}/app.log"
-PID_FILE="/var/run/${APP_NAME}.pid"
+LOG_FILE="/home/ubuntu/hotdeals-back/logs/app.log"
+PID_FILE="/home/ubuntu/hotdeals-back/logs/${APP_NAME}.pid"
 SPRING_PROFILE="prod"
 
 # ─── Server / Network ─────────────────────────────────────
