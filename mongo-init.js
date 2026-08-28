@@ -100,7 +100,7 @@ db.categories.insertMany([
 
 
 db.users.insertOne({
-  "uid": "2so4KBTpwTcN3QOzedE3mI6bCPD2",  // The UID from your Firebase token
+  "uid": "BD8jNYULMWZXItkvkMNTKnDsm6J2",  // The UID from your Firebase token
   "email": "pumasemj@gmail.com",
   "nickname": "admin",
   "avatar": "https://www.gravatar.com/avatar",
@@ -109,7 +109,7 @@ db.users.insertOne({
 })
 
 db.users.insertOne({
-  "uid": "Ck9fxGWhT0T4qYoR4zooF72pLz73",  // The UID from your Firebase token
+  "uid": "bGDug2yRtVbpgG7inHRvsKPMwkD2",  // The UID from your Firebase token
   "email": "bvelazquez5605@gmail.com",
   "nickname": "user 2",
   "avatar": "https://www.gravatar.com/avatar",

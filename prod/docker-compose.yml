@@ -1,0 +1,71 @@
+services:
+  mongodb:
+    container_name: hotdeals_mongodb_prod
+    image: mongo:8.0
+    ports:
+      - "127.0.0.1:27018:27017" # Strictly localhost
+    environment:
+      - MONGO_INITDB_DATABASE=db
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - hotdeals_mongodb-data:/data/db
+    restart: always
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.5"] # Prevents Mongo from eating all server RAM
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    mem_limit: 768m
+
+  elasticsearch:
+    container_name: hotdeals_elasticsearch_prod
+    image: elasticsearch:8.14.0
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: -Xms350m -Xmx350m
+      xpack.security.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      xpack.security.transport.ssl.enabled: "false"
+    ports:
+      - "127.0.0.1:9200:9200" # Strictly localhost
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    mem_limit: 750m
+
+  redis:
+    container_name: hotdeals_redis_prod
+    image: redis:7.0-alpine
+    # No password required + AOF enabled so login sessions survive restarts
+    command: >
+      redis-server 
+      --appendonly yes
+      --maxmemory 200mb
+      --maxmemory-policy allkeys-lru
+    ports:
+      - "127.0.0.1:6379:6379" # Strictly localhost
+    volumes:
+      - redis-data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+    mem_limit: 256m
+
+volumes:
+  elasticsearch-data:
+  hotdeals_mongodb-data:
+  redis-data:
+
+networks:
+  default:
+    name: hotdeals-network_prod
