@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+
 @Configuration
 public class OpenApi30Config {
 
@@ -35,7 +37,11 @@ public class OpenApi30Config {
 
   @Bean
   public OpenAPI hotdealsAPI() {
-    return new OpenAPI().info(getApiInfo()).components(getComponents()).tags(TAGS);
+    return new OpenAPI()
+        .info(getApiInfo())
+        .components(getComponents())
+        .tags(TAGS)
+        .addSecurityItem(new SecurityRequirement().addList(SECURITY_SCHEME_NAME));
   }
 
   private Info getApiInfo() {

@@ -116,7 +116,6 @@ public class SecurityConfig {
                     .requestMatchers(HttpMethod.OPTIONS, "/**") // UPDATED: antMatchers -> requestMatchers
                     .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
                     .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
-                    .requestMatchers(HttpMethod.GET, SWAGGER_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
                     .requestMatchers(new RegexRequestMatcher(PUBLIC_GET_ENDPOINTS_REGEX[0], HttpMethod.GET.name()));
   }
 }
