@@ -119,7 +119,7 @@ public class SecurityConfig {
   public WebSecurityCustomizer webSecurityCustomizer() {
     return (web) ->
             web.ignoring()
-                    .requestMatchers(HttpMethod.OPTIONS, "/**")
-                    .requestMatchers(HttpMethod.GET, SWAGGER_ENDPOINTS);
+                    .requestMatchers(HttpMethod.OPTIONS, "/**");
+                    //.requestMatchers(HttpMethod.GET, SWAGGER_ENDPOINTS);
   }
 }
