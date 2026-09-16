@@ -204,10 +204,11 @@ public class DealController {
   }
 
   @GetMapping("/searches")
-  @Operation(summary = "Returns search results for given query and filters")
+  @Operation(summary = "Returns search results for given query and filters", security = @SecurityRequirement(name = "bearerAuth"))
   @ApiResponses({
       @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = JsonNode.class))),
       @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content),
+      @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
   })
   public JsonNode searchDeals(
       @Parameter(description = "Search query", example = "iphone") @RequestParam(value = "query") String query,

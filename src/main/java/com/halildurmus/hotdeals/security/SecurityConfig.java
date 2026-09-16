@@ -34,11 +34,15 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
   private static final String[] PUBLIC_GET_ENDPOINTS = {
-          "/actuator/health", "/categories", "/deals/**", "/error", "/stores", "/categories/tags", "/api/v1/legal/**"
+          "/actuator/health", "/categories", "/error", "/stores", "/categories/tags", "/api/v1/legal/**"
   };
 
   // Matches /users/{id}, /users/{id}/comment-count, /users/{id}/extended
-  private static final String[] PUBLIC_GET_ENDPOINTS_REGEX = {"/users/(?!me|search).+"};
+  // and public /deals GET endpoints except /deals/searches
+  private static final String[] PUBLIC_GET_ENDPOINTS_REGEX = {
+          "/users/(?!me|search).+",
+          "/deals/(?!searches$).+"
+  };
 
   private static final String[] PUBLIC_POST_ENDPOINTS = {"/users"};
 
@@ -111,11 +115,15 @@ public class SecurityConfig {
 
   @Bean
   public WebSecurityCustomizer webSecurityCustomizer() {
-    return (web) ->
-            web.ignoring()
-                    .requestMatchers(HttpMethod.OPTIONS, "/**") // UPDATED: antMatchers -> requestMatchers
-                    .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
-                    .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS) // UPDATED: antMatchers -> requestMatchers
-                    .requestMatchers(new RegexRequestMatcher(PUBLIC_GET_ENDPOINTS_REGEX[0], HttpMethod.GET.name()));
+    return (web) -> {
+      var customizer = web.ignoring()
+              .requestMatchers(HttpMethod.OPTIONS, "/**")
+              .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
+              .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS)
+              .requestMatchers(HttpMethod.GET, SWAGGER_ENDPOINTS);
+      for (String regex : PUBLIC_GET_ENDPOINTS_REGEX) {
+        customizer.requestMatchers(new RegexRequestMatcher(regex, HttpMethod.GET.name()));
+      }
+    };
   }
 }
