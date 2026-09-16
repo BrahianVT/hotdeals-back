@@ -37,11 +37,8 @@ public class SecurityConfig {
           "/actuator/health", "/categories", "/error", "/stores", "/categories/tags", "/api/v1/legal/**"
   };
 
-  // Matches /users/{id}, /users/{id}/comment-count, /users/{id}/extended
-  // and public /deals GET endpoints except /deals/searches
   private static final String[] PUBLIC_GET_ENDPOINTS_REGEX = {
-          "/users/(?!me|search).+",
-          "/deals/(?!searches$).+"
+          "/users/(?!me|search).+"
   };
 
   private static final String[] PUBLIC_POST_ENDPOINTS = {"/users"};
@@ -89,41 +86,40 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
     httpSecurity
-            .cors(cors -> cors.configurationSource(corsConfigurationSource())) // UPDATED: lambda syntax for cors
-            .csrf(csrf -> csrf.disable()) // UPDATED: lambda syntax for csrf
-            .formLogin(Customizer.withDefaults()) // UPDATED: lambda syntax. Customizer.withDefaults() disables it by default when you use .disable()
-            .httpBasic(Customizer.withDefaults()) // UPDATED: lambda syntax. Customizer.withDefaults() disables it by default when you use .disable()
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .formLogin(Customizer.withDefaults())
+            .httpBasic(Customizer.withDefaults())
             .exceptionHandling(
-                    exceptionHandling -> exceptionHandling.authenticationEntryPoint(restAuthenticationEntryPoint())) // UPDATED: lambda syntax
+                    exceptionHandling -> exceptionHandling.authenticationEntryPoint(restAuthenticationEntryPoint()))
             .authorizeHttpRequests(
-                    authorizeRequests -> // UPDATED: authorizeRequests() -> authorizeHttpRequests()
+                    authorizeRequests ->
                             authorizeRequests
                                     .requestMatchers(
-                                            "/actuator/**", "/comment-reports/**", "/deal-reports/**", "/user-reports/**") // UPDATED: antMatchers -> requestMatchers
+                                            "/actuator/**", "/comment-reports/**", "/deal-reports/**", "/user-reports/**")
                                     .hasRole("SUPER")
+                                    .requestMatchers(HttpMethod.GET, "/deals/searches").authenticated()
+                                    .requestMatchers(HttpMethod.GET, "/deals/**").permitAll()
+                                    .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
+                                    .requestMatchers(new RegexRequestMatcher(PUBLIC_GET_ENDPOINTS_REGEX[0], HttpMethod.GET.name())).permitAll()
+                                    .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                                     .anyRequest()
                                     .authenticated())
             .addFilterBefore(firebaseFilter, BasicAuthenticationFilter.class)
             .sessionManagement(
                     sessionManagement ->
-                            sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)); // UPDATED: lambda syntax
+                            sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-    return httpSecurity.build(); // Don't forget to build the HttpSecurity object
+    return httpSecurity.build();
   }
 
   // The new way to configure WebSecurity is via a WebSecurityCustomizer bean
 
   @Bean
   public WebSecurityCustomizer webSecurityCustomizer() {
-    return (web) -> {
-      var customizer = web.ignoring()
-              .requestMatchers(HttpMethod.OPTIONS, "/**")
-              .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS)
-              .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS)
-              .requestMatchers(HttpMethod.GET, SWAGGER_ENDPOINTS);
-      for (String regex : PUBLIC_GET_ENDPOINTS_REGEX) {
-        customizer.requestMatchers(new RegexRequestMatcher(regex, HttpMethod.GET.name()));
-      }
-    };
+    return (web) ->
+            web.ignoring()
+                    .requestMatchers(HttpMethod.OPTIONS, "/**")
+                    .requestMatchers(HttpMethod.GET, SWAGGER_ENDPOINTS);
   }
 }
