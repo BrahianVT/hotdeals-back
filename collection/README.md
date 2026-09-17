@@ -23,9 +23,8 @@ All files use injected variables. Pass them via `--variable` or a `--variables-f
 Create a `vars.env` file in this folder:
 
 ```env
-baseUrl=https://api-dev.promoabastos.com
+baseUrl=https://api.promoabastos.com
 token=YOUR_FIREBASE_JWT_TOKEN
-query=monitor
 ```
 
 Then run any file with:
@@ -33,6 +32,10 @@ Then run any file with:
 ```bash
 hurl --variables-file collection/vars.env collection/<file>.hurl
 ```
+or execute them directly with variables name:
+hurl --variable baseUrl=https://api.promoabastos.com --variable token=token collection/deals-get-all.hurl
+hurl --variable baseUrl=https://api.promoabastos.com --variable query=Aceite --variable token=token collection/deals-search.hurl
+
 
 ---
 
