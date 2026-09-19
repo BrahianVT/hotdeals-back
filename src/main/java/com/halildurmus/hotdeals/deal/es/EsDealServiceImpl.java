@@ -446,46 +446,36 @@ public class EsDealServiceImpl implements EsDealService {
         }
       }
 
-      // Add query if specified
+      // Add query + active filters into a single bool query
+      BoolQuery.Builder combinedQuery = new BoolQuery.Builder();
       if (!ObjectUtils.isEmpty(searchParams.getQuery())) {
-        requestBuilder.query(q -> q.bool(createBoolQuery(searchParams.getHideExpired(), searchParams.getQuery())));
+        combinedQuery.must(q -> q.bool(createBoolQuery(searchParams.getHideExpired(), searchParams.getQuery())));
       }
+      // Filters applied as bool filter clauses (non-scoring, cached)
+      createFilters(searchParams, null).filter().forEach(combinedQuery::filter);
+      requestBuilder.query(q -> q.bool(combinedQuery.build()));
 
-      // Add aggregations
-      Map<String, Aggregation> aggsMap = new HashMap<>();
-      int i = 0;
-      for (Aggregation agg : createAggregations(searchParams)) {
-        // Use meaningful names for the aggregations
-        String name;
-        switch (i) {
-          case 0:
-            name = "aggAllFilters";
-            break;
-          case 1:
-            name = "aggCategory";
-            break;
-          case 2:
-            name = "aggPrice";
-            break;
-          case 3:
-            name = "aggStore";
-            break;
-          case 4:
-            name = "aggType";
-            break;
-          case 5:
-            name = "aggLocation";
-            break;
-          default:
-            name = "agg" + i;
-        }
-        aggsMap.put(name, agg);
-        i++;
-      }
-      requestBuilder.aggregations(aggsMap);
+      // -- AGGREGATIONS DISABLED (builder methods kept below for reference) --
+      // Map<String, Aggregation> aggsMap = new HashMap<>();
+      // int i = 0;
+      // for (Aggregation agg : createAggregations(searchParams)) {
+      //   String name;
+      //   switch (i) {
+      //     case 0: name = "aggAllFilters"; break;
+      //     case 1: name = "aggCategory";   break;
+      //     case 2: name = "aggPrice";      break;
+      //     case 3: name = "aggStore";      break;
+      //     case 4: name = "aggType";       break;
+      //     case 5: name = "aggLocation";   break;
+      //     default: name = "agg" + i;
+      //   }
+      //   aggsMap.put(name, agg);
+      //   i++;
+      // }
+      // requestBuilder.aggregations(aggsMap);
 
-      // Add post filter
-      requestBuilder.postFilter(pf -> pf.bool(createFilters(searchParams, null)));
+      // -- POST FILTER DISABLED (was needed to let aggs see unfiltered docs) --
+      // requestBuilder.postFilter(pf -> pf.bool(createFilters(searchParams, null)));
 
       SearchResponse<Object> response = esClient.search(requestBuilder.build(), Object.class);
       return serializeResponseToJsonNode(response);
