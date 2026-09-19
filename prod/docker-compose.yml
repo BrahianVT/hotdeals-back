@@ -18,7 +18,7 @@ services:
       retries: 3
     mem_limit: 1g
 
-    elasticsearch:
+  elasticsearch:
     container_name: hotdeals_elasticsearch_prod
     image: elasticsearch:8.14.0
     environment:
